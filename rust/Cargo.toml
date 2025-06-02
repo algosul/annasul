@@ -1,5 +1,5 @@
 [workspace]
-members = ["annasul"]
+members = ["annasul", "abuild"]
 resolver = "3"
 default-members = ["annasul"]
 exclude = []
@@ -15,3 +15,4 @@ description = "User-friendly yet personalized tool library"
 documentation = "https://docs.rs/annasul"
 
 [workspace.dependencies]
+clap = "4.5.39"
