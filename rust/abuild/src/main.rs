@@ -10,3 +10,16 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+use clap::Parser;
+
+#[derive(Debug, Parser)]
+struct Cli {
+    #[clap(short, long, value_name = "FILE")]
+    input: String,
+}
+
+fn main() {
+    let args = Cli::parse();
+    println!("input: {}", args.input);
+}
