@@ -8,6 +8,8 @@
 
 ---
 
+[note]: ./badges/note.svg
+
 [bug]: ./badges/bug.svg
 
 [feature]: ./badges/feature.svg
