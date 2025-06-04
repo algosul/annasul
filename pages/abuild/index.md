@@ -128,8 +128,8 @@
 
 ---
 
-[note]: ../badges/note.svg
+[note]: https://img.shields.io/badge/note-orange.svg?color=ddbb00
 
-[bug]: ../badges/bug.svg
+[bug]: https://img.shields.io/badge/bug-red.svg
 
-[feature]: ../badges/feature.svg
+[feature]: https://img.shields.io/badge/feature-orange.svg

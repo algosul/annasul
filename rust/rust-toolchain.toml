@@ -13,5 +13,4 @@ targets = [
     "aarch64-apple-ios",
     "x86_64-linux-android",
     "aarch64-linux-android",
-    "wasm64-unknown-unknown"
 ]
