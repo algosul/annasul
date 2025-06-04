@@ -12,8 +12,19 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use abuild::command;
+// use clap::CommandFactory;
 
 fn main() {
+    // let matches = command::Cli::command().get_matches();
+    // if matches.contains_id("generate-bash-completions") {
+    //     let default = Cow::Borrowed(env!("CARGO_PKG_NAME"));
+    //     let bin_name = std::env::current_exe().map_or(default.clone(), |p| {
+    //         p.file_name()
+    //             .map_or(default.clone(), |n| Cow::Owned(n.display().to_string()))
+    //     });
+    //     command::generate_completion(Bash, &bin_name, &mut std::io::stdout());
+    //     return;
+    // }
     let args = command::parse_args();
     println!("input: {:?}", args);
 }
