@@ -12,14 +12,17 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //!
-//! > > ![feature] init/create/remove workspace
+//! # commands:
+//! > > ![feature] init/create/remove (workspace|project|profile)
+//! > > + ![note] init profile: unsupported yet.
 //! > > + ![note] init/create: The workspace directory must be empty.
+//! > > + ![note] create/remove profile: The current folder must be a (workspace|project), or the (-w|-j) option must be provided.
 //! > > ```shell
-//! > > $ abuild init (-w|--workspace)
+//! > > $ abuild init
 //! > > workspace "<current_directory>" was initialized successfully.
-//! > > $ abuild create (-w|--workspace) <workspace_name>
+//! > > $ abuild create
 //! > > workspace "<workspace_name>" was created successfully.
-//! > > $ abuild remove (-w|--workspace) <workspace_name>
+//! > > $ abuild remove
 //! > > workspace "<workspace_name>" was removed successfully.
 //! > > ```
 //! >
@@ -33,38 +36,13 @@
 //! > > ... # output of the redo operation
 //! > > ```
 //! >
-//! > > ![feature] init/create/remove project (workspace|none)
-//! > > + ![note] The current folder must be a workspace, or the -w option must be provided.
-//! > > ```shell
-//! > > $ abuild init (-j|--project) ((-w|--workspace) <workspace_path>)?
-//! > > project "<current_directory>" was initialized successfully.
-//! > > it is added to workspace '<current_workspace>'.
-//! > > $ abuild create (-j|--project) <project_name> ((-w|--workspace) <workspace_path>)?
-//! > > project "<project_name>" was created successfully.
-//! > > it is added to workspace '<current_workspace>'.
-//! > > $ abuild remove (-j|--project) <project_name> ((-w|--workspace) <workspace_path>)?
-//! > > project "<project_name>" was removed successfully.
-//! > > it is removed from workspace '<current_workspace>'.
-//! > > ```
-//! >
-//! > > ![feature] create/remove profile (workspace|project)
-//! > > + ![note] The current folder must be a (workspace|project), or the (-w|-j) option must be provided.
-//! > > ```shell
-//! > > $ abuild create (-p|--profile) <profile_name> ((-j|--project) <project_name>)? ((-w|--workspace) <workspace_path>)?
-//! > > profile "<profile_name>" was created successfully.
-//! > > it is added to (project '<current_project>'|workspace '<current_workspace>').
-//! > > $ abuild remove (-p|--profile) <profile_name> ((-j|--project) <project_name>)? ((-w|--workspace) <workspace_path>)?
-//! > > profile "<profile_name>" was removed successfully.
-//! > > it is removed from (project '<current_project>'|workspace '<current_workspace>').
-//! > > ```
-//! >
 //! > > ![feature] build/clean (workspace|project|profile)
 //! > > ```shell
-//! > > $ abuild build ((-p|--profile) <profile_name>)? ((-j|--project) <project_name>)? ((-w|--workspace) <workspace_path>)?
+//! > > $ abuild build
 //! > > building...
 //! > > ... # output of the build process
 //! > > building finished.
-//! > > $ abuild clean ((-p|--profile) <profile_name>)? ((-j|--project) <project_name>)? ((-w|--workspace) <workspace_path>)?
+//! > > $ abuild clean
 //! > > cleaning...
 //! > > ... # output of the clean process
 //! > > cleaning finished.
@@ -72,7 +50,7 @@
 //! >
 //! > > ![feature] run (workspace|project|profile)
 //! > > ```shell
-//! > > $ abuild run ((-p|--profile) <profile_name>)? ((-j|--project) <project_name>)? ((-w|--workspace) <workspace_path>)?
+//! > > $ abuild run
 //! > > ... # output of the build process (if not already built)
 //! > > running...
 //! > > ... # output of the run process
@@ -81,10 +59,26 @@
 //! >
 //! > > ![feature] rebuild = clean \& build (workspace|project|profile)
 //! > > ```shell
-//! > > $ abuild rebuild ((-p|--profile) <profile_name>)? ((-j|--project) <project_name>)? ((-w|--workspace) <workspace_path>)?
+//! > > $ abuild rebuild
 //! > > ... # output of the clean process
 //! > > ... # output of the build process
 //! > > ```
+//! >
+//! > > ![feature] set/unset (workspace|project|profile)
+//! > > ```shell
+//! > > $ abuild set -w . config.author "your_name"
+//! > > the workspace '<workspace_name>' config "author" was set to "your_name".
+//! > > $ abuild set -j my_project config.version "1.0.0"
+//! > > the project '<project_name>' config "version" was set to "1.0.0".
+//! > > ```
+//! >
+//!
+//! # Options:
+//! - `-w, --workspace <workspace_path>`: set the workspace directory.
+//! - `-j, --project <project_name>`: set the project name.
+//! - `-p, --profile <profile_name>`: set the profile name.
+//! - `-b, --binary <binary_name>`: set the binary name to build or run.
+//! - `-a, --args <args>`: set the arguments to pass to the binary.
 //!
 //! [note]: https://img.shields.io/badge/note-orange.svg?color=ddbb00
 //!
