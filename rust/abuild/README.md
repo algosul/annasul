@@ -4,11 +4,11 @@
 
 ## language support
 
-- Rust
-- C/C++
-- C#
+- Rust ![feature]
+- C/C++ ![feature]
+- C# ![feature]
 
-## usage
+## usage ![feature]
 
 ```shell
 $ abuild create -w my-worksapce
@@ -25,3 +25,12 @@ $ abuild clean
 ...
 $ 
 ```
+
+---
+
+
+[note]: https://img.shields.io/badge/note-orange.svg?color=ddbb00
+
+[bug]: https://img.shields.io/badge/bug-red.svg
+
+[feature]: https://img.shields.io/badge/feature-orange.svg
