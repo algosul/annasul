@@ -109,6 +109,8 @@ pub fn app_config_dir() -> Cow<'static, Path> {
 
 pub fn make_app_config_dir() -> std::io::Result<Cow<'static, Path>> {
     let app_config_dir = app_config_dir();
-    std::fs::create_dir(&app_config_dir)?;
+    if !app_config_dir.exists() {
+        std::fs::create_dir(&app_config_dir)?;
+    }
     Ok(app_config_dir)
 }
