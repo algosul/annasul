@@ -102,9 +102,28 @@ use clap_complete::aot::generate;
 use clap_complete::Generator;
 use io::Write;
 use std::ffi::OsString;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Formatter};
 use std::io;
 use std::path::PathBuf;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Error {}
+impl Display for Error {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            _ => write!(f, "Error"),
+        }
+    }
+}
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            _ => None,
+        }
+    }
+}
+
+pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Parser)]
 #[command(version, about, author, long_about = None)]
@@ -116,15 +135,12 @@ pub struct Cli {
 pub type Shell = clap_complete::Shell;
 
 #[derive(Debug, Clone, PartialEq, Eq, ValueEnum)]
-pub enum AutoCompleteOptions {
-    /// install completion script
-    #[clap(name = "install")]
+pub enum AutoCompleteCommand {
+    /// install auto-completion script
     Install,
-    /// reinstall completion script
-    #[clap(name = "reinstall")]
+    /// reinstall auto-completion script
     Reinstall,
-    /// uninstall completion script
-    #[clap(name = "uninstall")]
+    /// uninstall auto-completion script
     Uninstall,
 }
 
@@ -132,8 +148,8 @@ pub enum AutoCompleteOptions {
 pub enum SubCommand {
     /// auto-completion script
     AutoComplete {
-        #[clap(value_parser=value_parser!(AutoCompleteOptions))]
-        command: AutoCompleteOptions,
+        #[clap(value_parser=value_parser!(AutoCompleteCommand))]
+        command: AutoCompleteCommand,
         #[clap(value_parser=value_parser!(Shell))]
         shell: Shell,
     },
@@ -206,11 +222,7 @@ pub struct ScopeOptions {
     #[clap(short = 'j', long, value_hint = ValueHint::DirPath)]
     pub project: Option<String>,
     /// set the profile name
-    #[clap(short, long, value_parser = [
-        "debug", "release", // Cargo profiles
-        "Debug", "Release", "RelWithDebInfo", "MinSizeRel", // CMake profiles
-        "stable", "nightly" // Rustup profiles
-    ], value_hint = ValueHint::Unknown)]
+    #[clap(short, long, value_hint = ValueHint::Unknown)]
     pub profile: Option<String>,
 }
 
@@ -220,4 +232,55 @@ pub fn parse_args() -> Cli {
 
 pub fn generate_completion<G: Generator>(generator: G, bin_name: &str, buf: &mut dyn Write) {
     generate(generator, &mut Cli::command(), bin_name, buf);
+}
+
+impl Cli {
+    pub fn run(&self) -> Result<()> {
+        self.sub_command().run()
+    }
+    pub fn sub_command(&self) -> &SubCommand {
+        &self.sub_command
+    }
+    pub fn sub_command_mut(&mut self) -> &mut SubCommand {
+        &mut self.sub_command
+    }
+}
+
+impl SubCommand {
+    pub fn run(&self) -> Result<()> {
+        match self {
+            SubCommand::AutoComplete { command, shell } => {
+                todo!()
+            }
+            SubCommand::Init { scope } => {
+                todo!()
+            }
+            SubCommand::Create { scope } => {
+                todo!()
+            }
+            SubCommand::Remove { scope } => {
+                todo!()
+            }
+            SubCommand::Undo { scope } => todo!(),
+            SubCommand::Redo { scope } => {
+                todo!()
+            }
+            SubCommand::Build { binary, scope } => {
+                todo!()
+            }
+            SubCommand::Clean { scope } => {
+                todo!()
+            }
+            SubCommand::Run {
+                binary,
+                args,
+                scope,
+            } => {
+                todo!()
+            }
+            SubCommand::Rebuild { binary, scope } => {
+                todo!()
+            }
+        }
+    }
 }

@@ -13,7 +13,6 @@
 
 use abuild::command;
 
-fn main() {
-    let args = command::parse_args();
-    println!("input: {:?}", args);
+fn main() -> command::Result<()> {
+    command::parse_args().run()
 }
