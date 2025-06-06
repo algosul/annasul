@@ -3,7 +3,6 @@
 [![License: AGPL v3 only](https://img.shields.io/badge/License-AGPL_v3_only-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
 + [Homepage](https://yuanair.github.io/annasul)
-+ [Docs](https://github.com/yuanair/annasul/tree/main/docs/docs/docs.md)
 
 ## License
 
