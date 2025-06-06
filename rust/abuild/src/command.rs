@@ -106,19 +106,21 @@ use std::fmt::{Debug, Display, Formatter};
 use std::io;
 use std::path::PathBuf;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Error {}
+#[derive(Debug)]
+pub enum Error {
+    IOError(io::Error),
+}
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            _ => write!(f, "Error"),
+            Error::IOError(e) => write!(f, "IO error: {}", e),
         }
     }
 }
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            _ => None,
+            Error::IOError(e) => Some(e),
         }
     }
 }
@@ -142,6 +144,8 @@ pub enum AutoCompleteCommand {
     Reinstall,
     /// uninstall auto-completion script
     Uninstall,
+    /// output auto-completion script
+    Output,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Subcommand)]
@@ -250,7 +254,15 @@ impl SubCommand {
     pub fn run(&self) -> Result<()> {
         match self {
             SubCommand::AutoComplete { command, shell } => {
-                todo!()
+                let mut buffer = Vec::new();
+                generate_completion(*shell, &crate::app_name(), &mut buffer);
+                match command {
+                    AutoCompleteCommand::Output => {
+                        io::stdout().write_all(&buffer).map_err(Error::IOError)?;
+                        Ok(())
+                    }
+                    _ => todo!(),
+                }
             }
             SubCommand::Init { scope } => {
                 todo!()

@@ -75,6 +75,15 @@
 //! [feature]: https://img.shields.io/badge/feature-orange.svg
 //!
 
+use std::borrow::Cow;
+
 pub mod command;
 
 pub mod lang;
+
+pub fn app_name() -> Cow<'static, str> {
+    fn app_name_from_env() -> Option<Cow<'static, str>> {
+        Some(Cow::Owned(std::env::current_exe().ok()?.file_stem()?.to_str()?.to_owned()))
+    }
+    app_name_from_env().unwrap_or(Cow::Borrowed(env!("CARGO_PKG_NAME")))
+}
