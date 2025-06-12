@@ -2,9 +2,9 @@ name: Deploy Homepage
 on:
   push:
     branches: [ "release" ]
-    workflow_dispatch:
     paths:
       - 'docs/**'
+  workflow_dispatch:
 permissions:
   contents: read
   pages: write
