@@ -7,6 +7,7 @@ exclude = []
 version = "0.0.1"
 authors = ["yuanair@github.com"]
 homepage = "https://github.com/yuanair/annasul"
+repository = "https://github.com/yuanair/annasul"
 keywords = ["annasul"]
 license = "AGPL-3.0-only"
 edition = "2024"
