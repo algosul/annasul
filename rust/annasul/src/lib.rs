@@ -15,13 +15,14 @@
 //!
 //! # app
 //! ```
+//! # use annasul::app;
 //! // install rustup
 //! #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
-//! annasul::app::apps::desktop::rustup::install().unwrap();
+//! app::apps::desktop::rustup::Rustup::new().install().unwrap();
 //! ```
 //!
 
-#[cfg(any(doc, feature = "app"))]
+#[cfg(any(doc, test, feature = "app"))]
 pub mod app;
 mod os_impl;
 

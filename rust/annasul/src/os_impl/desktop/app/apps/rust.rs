@@ -12,14 +12,13 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 use std::borrow::Cow;
 use std::ffi::OsStr;
-use std::fmt::{Display, Formatter, Pointer, Write};
-use std::io::{Read, Stderr, Stdin, Stdout};
-use std::os::fd::{AsFd, AsRawFd};
+use std::fmt::{Display, Formatter};
+#[cfg(unix)]
+use std::os::unix::ffi::OsStrExt;
 use std::path::{Path, PathBuf};
-use std::pin::Pin;
 use std::process::{ExitStatus, Stdio};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::process::{Child, Command};
+use tokio::process::Command;
 
 #[derive(Debug)]
 pub struct Rustup {
@@ -30,18 +29,33 @@ pub struct Rustup {
 pub enum Error {
     Unsupported(String),
     IOError(std::io::Error),
+    TaskJoinError(tokio::task::JoinError),
     InnerError(String),
-    Failed{exit_status: ExitStatus, stdin: Stdin, stdout: Stdout, stderr: Stderr},
+    Failed {
+        exit_status: ExitStatus,
+        stdin: String,
+        stdout: String,
+        stderr: String,
+    },
+    FailedToGetHomeDir,
 }
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Error::Unsupported(info) => f.write_fmt(format_args!("Unsupported: {}", info)),
             Error::IOError(e) => f.write_fmt(format_args!("IO error: {}", e)),
+            Error::TaskJoinError(e) => f.write_fmt(format_args!("Task join error: {}", e)),
             Error::InnerError(info) => f.write_fmt(format_args!("Inner error: {}", info)),
-            Error::Failed{exit_status, stdin, stdout, stderr} => 
-                f.write_fmt(format_args!("Failed:\n - exit status: {}\n - stdin:\n{}\n\n - stdout:\n{}\n\n - stderr:\n{}", exit_status, OsStr::new(&stdin.bytes()).to_string_lossy(), stdout., stderr))
-            ,
+            Error::Failed {
+                exit_status,
+                stdin,
+                stdout,
+                stderr,
+            } => f.write_fmt(format_args!(
+                "Failed:\n - exit status: {}\n - stdin:\n{}\n\n - stdout:\n{}\n\n - stderr:\n{}",
+                exit_status, stdin, stdout, stderr
+            )),
+            Error::FailedToGetHomeDir => f.write_fmt(format_args!("failed to get HOME dir")),
         }
     }
 }
@@ -50,8 +64,10 @@ impl std::error::Error for Error {
         match self {
             Error::Unsupported(_) => None,
             Error::IOError(e) => Some(e),
+            Error::TaskJoinError(e) => Some(e),
             Error::InnerError(_) => None,
-            Error::Failed{..} => None,
+            Error::Failed { .. } => None,
+            Error::FailedToGetHomeDir => None,
         }
     }
 }
@@ -91,21 +107,46 @@ pub enum InstallInfo {
     Default,
     Custom(InstallCustomInfo),
 }
-impl Default for InstallCustomInfo {
-    fn default() -> Self {
-        Self {
-            modify_path_variable: true,
-            ..Default::default()
+impl Display for Toolchain {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Toolchain::Stable => f.write_str("stable"),
+            Toolchain::Beta => f.write_str("beta"),
+            Toolchain::Nightly => f.write_str("nightly"),
+            Toolchain::None => f.write_str("none"),
         }
     }
 }
-impl<'a> crate::app::App<'a> for Rustup {
+impl Display for HostTriple {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            HostTriple::Host => f.write_str("host"),
+            HostTriple::Target(target) => f.write_str(target),
+        }
+    }
+}
+impl Display for Profile {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Profile::Minimal => f.write_str("minimal"),
+            Profile::Default => f.write_str("default"),
+            Profile::Complete => f.write_str("complete"),
+        }
+    }
+}
+impl Default for InstallCustomInfo {
+    fn default() -> Self {
+        Self {
+            default_host_triple: Default::default(),
+            default_toolchain: Default::default(),
+            profile: Default::default(),
+            modify_path_variable: true,
+        }
+    }
+}
+impl<'a> crate::app::AppInfo<'a> for Rustup {
     type Error = Error;
-    type InstallInfo = InstallInfo;
-    type ReinstallInfo = ();
-    type RemoveInfo = ();
-    type UpdateInfo = ();
-    fn name(&self) -> Cow<'a, str> {
+    async fn name(&self) -> Cow<'a, str> {
         Cow::Borrowed("rustup")
     }
 
@@ -129,19 +170,26 @@ impl<'a> crate::app::App<'a> for Rustup {
         Ok(Some(Cow::Borrowed("https://rustup.rs/")))
     }
 
-    async fn home_path(&self) -> Result<Option<Cow<'a, Path>>> {
-        todo!()
-    }
-
-    async fn bin_path(&self) -> Result<Option<Cow<'a, Path>>> {
-        todo!()
-    }
-
     async fn version(&self) -> Result<Cow<'a, str>> {
         todo!()
     }
-
-    async fn install(&self, info: Self::InstallInfo) -> Result<()> {
+}
+impl<'a> crate::app::AppPath<'_> for Rustup {
+    type Error = Error;
+    async fn home_path(&self) -> std::result::Result<Option<Cow<'a, Path>>, Self::Error> {
+        Ok(Some((&self.home_path).into()))
+    }
+    async fn bin_path(&self) -> std::result::Result<Option<Cow<'a, Path>>, Self::Error> {
+        todo!()
+    }
+}
+impl crate::app::AppOper for Rustup {
+    type Error = Error;
+    type InstallInfo = InstallInfo;
+    type ReinstallInfo = ();
+    type RemoveInfo = ();
+    type UpdateInfo = ();
+    async fn install(info: Self::InstallInfo) -> Result<Self> {
         // curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
         if cfg!(unix) {
             let mut command = Command::new("curl")
@@ -158,72 +206,78 @@ impl<'a> crate::app::App<'a> for Rustup {
                 .spawn()
                 .map_err(Error::IOError)?;
 
-            let (mut stdin, stdout, stderr) = (
-                command
-                    .stdin
-                    .take()
-                    .ok_or(Error::InnerError("stdin is not available".to_string()))?,
-                command
-                    .stdout
-                    .as_ref()
-                    .ok_or(Error::InnerError("stdout is not available".to_string()))?,
-                command
-                    .stderr
-                    .as_ref()
-                    .ok_or(Error::InnerError("stderr is not available".to_string()))?,
+            let (mut stdin, mut stdout, mut stderr) = (
+                command.stdin.take().ok_or(Error::InnerError(
+                    "Command 'curl': stdin is not available".to_string(),
+                ))?,
+                command.stdout.take().ok_or(Error::InnerError(
+                    "Command 'curl': stdout is not available".to_string(),
+                ))?,
+                command.stderr.take().ok_or(Error::InnerError(
+                    "Command 'curl': stderr is not available".to_string(),
+                ))?,
             );
 
-            match info {
-                InstallInfo::Default => {
-                    Pin::new(&mut stdin)
-                        .write_all("1\n".as_bytes())
-                        .await
-                        .map_err(Error::IOError)?;
-                }
+            let (mut stdout_buf, mut stderr_buf) = (Vec::new(), Vec::new());
+
+            let stdin_buf: Cow<'static, str> = match info {
+                InstallInfo::Default => "1\n".into(),
                 InstallInfo::Custom(InstallCustomInfo {
                     default_host_triple,
                     default_toolchain,
                     profile,
                     modify_path_variable,
-                }) => {
-                    Pin::new(&mut stdin)
-                        .write_all(
-                            format!(
-                                "2\n{}\n{}\n{}\n{}\n1",
-                                default_host_triple,
-                                default_toolchain,
-                                profile,
-                                if modify_path_variable { "Y" } else { "n" }
-                            )
-                            .as_bytes(),
-                        )
-                        .await
-                        .map_err(Error::IOError)?;
-                }
-            }
+                }) => format!(
+                    "2\n{}\n{}\n{}\n{}\n1\n",
+                    default_host_triple,
+                    default_toolchain,
+                    profile,
+                    if modify_path_variable { "Y" } else { "n" }
+                )
+                .into(),
+            };
 
-            let mut output_buf = Vec::new();
+            let stdin_write_handle = {
+                let stdin_buf = &stdin_buf;
+                tokio::spawn(async move {
+                    stdin.write_all(stdin_buf.as_bytes()).await?;
+                    stdin.shutdown().await?;
+                    Ok::<_, std::io::Error>(())
+                })
+            };
 
-            let write_handle = tokio::spawn(async move {
-                stdin.write_all(b"hello async world").await?;
-                stdin.shutdown().await?;
-                Ok::<_, std::io::Error>(())
-            });
+            let stdout_read_handle =
+                tokio::spawn(async move { stdout.read_to_end(&mut stdout_buf).await });
 
-            let read_handle = tokio::spawn(async move {
-                stdout.read_to_end(&mut output_buf).await
-            });
+            let stderr_read_handle =
+                tokio::spawn(async move { stderr.read_to_end(&mut stderr_buf).await });
 
-            let (write_result, read_result) = tokio::join!(write_handle, read_handle);
-            write_result??;
-            read_result??;
-            
-            stdin.shutdown().await.map_err(Error::IOError)?;
+            let (stdin_write_result, stdout_read_handle, stderr_read_handle) =
+                tokio::try_join!(stdin_write_handle, stdout_read_handle, stderr_read_handle)
+                    .map_err(Error::TaskJoinError)?;
+            stdin_write_result.map_err(Error::IOError)?;
+            stdout_read_handle.map_err(Error::IOError)?;
+            stderr_read_handle.map_err(Error::IOError)?;
+
             let exit_status = command.wait().await.map_err(Error::IOError)?;
             if exit_status.success() {
-                Ok(())
+                Ok(Self {
+                    // ~/.config
+                    home_path: std::env::home_dir()
+                        .ok_or(Error::FailedToGetHomeDir)?
+                        .join(".config"),
+                })
             } else {
-                Err(Error::Failed {exit_status ,stdout: stdout., stderr:stderr})
+                Err(Error::Failed {
+                    exit_status,
+                    stdin: stdin_buf.into_owned(),
+                    stdout: OsStr::from_bytes(&stdout_buf)
+                        .to_string_lossy()
+                        .into_owned(),
+                    stderr: OsStr::from_bytes(&stderr_buf)
+                        .to_string_lossy()
+                        .into_owned(),
+                })
             }
         } else if cfg!(windows) {
             todo!()
@@ -235,15 +289,15 @@ impl<'a> crate::app::App<'a> for Rustup {
         }
     }
 
-    async fn reinstall(&self, info: Self::ReinstallInfo) -> Result<()> {
+    async fn reinstall(self, info: Self::ReinstallInfo) -> Result<Self> {
         todo!()
     }
 
-    async fn remove(&self, info: Self::RemoveInfo) -> Result<()> {
+    async fn remove(self, info: Self::RemoveInfo) -> Result<()> {
         todo!()
     }
 
-    async fn update(&self, info: Self::UpdateInfo) -> Result<()> {
+    async fn update(self, info: Self::UpdateInfo) -> Result<Self> {
         todo!()
     }
 }

@@ -11,5 +11,5 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(any(doc, feature = "app-apps"))]
+#[cfg(any(doc, test, feature = "app-apps"))]
 pub mod apps;
