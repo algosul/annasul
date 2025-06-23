@@ -11,14 +11,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 use crate::app::AppLicense;
-use log::trace;
+use log::{info, trace, warn};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::ffi::OsString;
 use std::fmt::{Display, Formatter};
-use std::fs;
-use std::fs::{create_dir, exists, File};
-use std::io::{stderr, stdout, Write};
+use std::fs::{create_dir, exists, metadata, File};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{ExitStatus, Stdio};
 use tokio::io::AsyncReadExt;
@@ -140,10 +139,10 @@ async fn download_rustup_init_sh() -> Result<()> {
 async fn chmod_rustup_init_sh() -> Result<()> {
     use std::os::unix::fs::PermissionsExt;
     let path = Path::new("./cache/rustup-init.sh");
-    let metadata = fs::metadata(path).map_err(Error::IOError)?;
+    let metadata = metadata(path).map_err(Error::IOError)?;
     let mut permissions = metadata.permissions();
     permissions.set_mode(permissions.mode() | 0o100);
-    fs::set_permissions(path, permissions).map_err(Error::IOError)?;
+    std::fs::set_permissions(path, permissions).map_err(Error::IOError)?;
     Ok(())
 }
 
@@ -234,6 +233,7 @@ impl crate::app::AppOper for Rustup {
     type UpdateInfo = ();
     async fn install(info: Self::InstallInfo) -> Result<Self> {
         if cfg!(unix) {
+            use std::os::unix::ffi::OsStringExt;
             trace!("Installing Rustup with info: {info:?}");
             download_rustup_init_sh().await?;
             trace!("Downloaded rustup-init.sh successfully");
@@ -278,17 +278,25 @@ impl crate::app::AppOper for Rustup {
             let exit_status = command.wait().await.map_err(Error::IOError)?;
             trace!("Command finished with exit status: {exit_status}");
 
-            let mut stdout_buf = Vec::new();
+            let (mut stdout_buf, mut stderr_buf) = (Vec::new(), Vec::new());
             stdout
                 .read_to_end(&mut stdout_buf)
                 .await
                 .map_err(Error::IOError)?;
-
-            let mut stderr_buf = Vec::new();
             stderr
                 .read_to_end(&mut stderr_buf)
                 .await
                 .map_err(Error::IOError)?;
+            let (stdout_buf, stderr_buf) = (
+                OsString::from_vec(stdout_buf)
+                    .to_string_lossy()
+                    .into_owned(),
+                OsString::from_vec(stderr_buf)
+                    .to_string_lossy()
+                    .into_owned(),
+            );
+            info!("Command finished with stdout: \n{stdout_buf}");
+            warn!("Command finished with stderr: \n{stderr_buf}");
             if exit_status.success() {
                 Ok(Self {
                     // ~/.config
@@ -297,18 +305,11 @@ impl crate::app::AppOper for Rustup {
                         .join(".config"),
                 })
             } else {
-                use std::os::unix::ffi::OsStringExt;
                 Err(Error::Failed {
                     exit_status,
                     stdin: "".into(),
-                    stdout: OsString::from_vec(stdout_buf)
-                        .to_string_lossy()
-                        .into_owned()
-                        .into(),
-                    stderr: OsString::from_vec(stderr_buf)
-                        .to_string_lossy()
-                        .into_owned()
-                        .into(),
+                    stdout: stdout_buf.into(),
+                    stderr: stderr_buf.into(),
                 })
             }
         } else if cfg!(windows) {
