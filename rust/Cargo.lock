@@ -47,6 +47,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "annasul_lang"
+version = "0.0.1"
+
+[[package]]
 name = "anstream"
 version = "0.6.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"

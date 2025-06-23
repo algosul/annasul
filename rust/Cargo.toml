@@ -1,5 +1,5 @@
 [workspace]
-members = ["annasul", "abuild"]
+members = ["annasul", "abuild", "annasul_lang"]
 resolver = "3"
 exclude = []
 
