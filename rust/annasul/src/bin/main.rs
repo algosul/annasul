@@ -11,8 +11,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 use annasul::app::{
-    apps::rust::{InstallInfo, Rustup},
     AppOper,
+    apps::rust::{InstallInfo, Rustup},
 };
 #[tokio::main]
 async fn main() {
