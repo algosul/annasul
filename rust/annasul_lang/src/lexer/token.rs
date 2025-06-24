@@ -32,6 +32,8 @@ pub enum Token {
     Literal(Literal),
     /// see [Operator]
     Operator(Operator),
+    /// End of File
+    EOF,
 }
 
 #[doc = include_str!("comment.md")]
@@ -185,6 +187,7 @@ impl Display for Token {
             Token::Keyword(keyword) => write!(f, "{}", keyword),
             Token::Literal(literal) => write!(f, "{}", literal),
             Token::Operator(operator) => write!(f, "{}", operator),
+            Token::EOF => write!(f, "<EOF>"),
         }
     }
 }
