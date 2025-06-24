@@ -110,7 +110,7 @@ pub enum Keyword {
     r#break,
     r#const,
     r#continue,
-    #[serde(rename = "crate")]
+    #[cfg_attr(feature = "serde", serde(rename = "crate"))]
     crate_,
     r#do,
     r#dyn,
@@ -137,13 +137,13 @@ pub enum Keyword {
     r#pub,
     r#ref,
     r#return,
-    #[serde(rename = "Self")]
+    #[cfg_attr(feature = "serde", serde(rename = "Self"))]
     Self_,
-    #[serde(rename = "self")]
+    #[cfg_attr(feature = "serde", serde(rename = "self"))]
     self_,
     r#static,
     r#struct,
-    #[serde(rename = "super")]
+    #[cfg_attr(feature = "serde", serde(rename = "super"))]
     super_,
     r#trait,
     r#true,
