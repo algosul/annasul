@@ -10,12 +10,28 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
-use annasul::app::{
-    AppOper,
-    apps::rust::{InstallInfo, Rustup},
-};
+use gtk4::{Application, ApplicationWindow, Button, Entry, Orientation, prelude::*};
 #[tokio::main]
-async fn main() {
+async fn main() -> glib::ExitCode {
     env_logger::init();
-    Rustup::install(InstallInfo::Default,).await.unwrap();
+    let app = Application::builder().application_id("yuanair.github.io").build();
+    app.connect_activate(|app| {
+        let window = ApplicationWindow::builder()
+            .application(app)
+            .title(env!("CARGO_PKG_NAME"))
+            .default_width(800)
+            .default_height(600)
+            .build();
+        window.present();
+        let vbox = gtk4::Box::new(Orientation::Vertical, 10);
+        window.set_child(Some(&vbox));
+        let entry = Entry::builder().placeholder_text("Input").margin_top(20).build();
+        vbox.append(&entry);
+        let button = Button::with_label("Ok");
+        vbox.append(&button);
+        button.connect_clicked(move |_| {
+            println!("Input: {}", entry.text());
+        });
+    });
+    app.run()
 }

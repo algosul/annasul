@@ -11,4 +11,4 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 use abuild::command;
-fn main() -> command::Result<(),> { command::parse_args().run() }
+fn main() -> command::Result<()> { command::parse_args().run() }

@@ -20,8 +20,8 @@
 //!             apps::rust::{InstallInfo, Rustup},
 //!         };
 //!         // install rustup
-//!         Rustup::install(InstallInfo::Default,).await
-//!     },)
+//!         Rustup::install(InstallInfo::Default).await
+//!     })
 //!     .unwrap();
 //! println!("Hello {rustup:#?}");
 //! ```
