@@ -17,15 +17,17 @@ use std::{
 
 use annasul::app::apps::rust::{HostTriple, Profile, Toolchain};
 use gtk4::{
-    prelude::*,
     Application,
     ApplicationWindow,
+    Box,
     Button,
     ComboBoxText,
     Entry,
     Label,
     Notebook,
     Orientation,
+    glib::ExitCode,
+    prelude::*,
 };
 fn build_combo<T: Default + Debug + Display + FromStr + 'static>(
     combo: ComboBoxText, all: &[T], f: fn(&T),
@@ -37,8 +39,7 @@ fn build_combo<T: Default + Debug + Display + FromStr + 'static>(
     combo.connect_changed(move |combo| {
         let active_id = combo.active_id().and_then(|id| id.parse().ok());
         if let Some(id) = active_id {
-            let selected = T::from(id);
-            f(&selected);
+            f(&id);
         }
     });
     combo
@@ -53,11 +54,11 @@ fn build_notebook<T: Debug + Display + FromStr + 'static>(
         );
     }
     notebook.set_current_page(Some(0));
-    notebook.connect_change_current_page(move |notebook, i| f(i));
+    notebook.connect_change_current_page(move |_notebook, i| f(i));
     notebook
 }
 #[tokio::main]
-async fn main() -> glib::ExitCode {
+async fn main() -> ExitCode {
     env_logger::init();
     let app = Application::builder().application_id("yuanair.github.io").build();
     app.connect_activate(|app| {
@@ -71,16 +72,16 @@ async fn main() -> glib::ExitCode {
         let notebook = Notebook::builder().build();
         window.set_child(Some(&notebook));
         for i in 1..=3 {
-            let vbox = gtk4::Box::new(Orientation::Vertical, 10);
+            let vbox = Box::new(Orientation::Vertical, 10);
             vbox.append(&build_combo(
-                ComboBoxText::new(),
+                ComboBoxText::builder().build(),
                 &[Profile::Minimal, Profile::Default, Profile::Complete],
                 |profile| {
                     println!("profile: {profile}");
                 },
             ));
             vbox.append(&build_combo(
-                ComboBoxText::new(),
+                ComboBoxText::builder().build(),
                 &[
                     Toolchain::Stable,
                     Toolchain::Beta,
@@ -92,7 +93,7 @@ async fn main() -> glib::ExitCode {
                 },
             ));
             vbox.append(&build_notebook(
-                Notebook::new(),
+                Notebook::builder().build(),
                 &[HostTriple::Host, HostTriple::Target("".to_string())],
                 |i| {
                     println!("host: {i}");

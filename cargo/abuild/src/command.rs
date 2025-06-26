@@ -171,7 +171,6 @@ impl Cli {
     pub fn sub_command_mut(&mut self) -> &mut SubCommand { &mut self.sub_command }
 }
 impl ShellOptions {
-    #[cfg(unix)]
     pub fn config_dir(&self) -> Result<Cow<'static, Path, >, > {
         match self.shell {
             Shell::Bash => Ok(Cow::Borrowed(Path::new("/etc/bash_completion.d"))),

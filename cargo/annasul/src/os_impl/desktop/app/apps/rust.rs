@@ -12,18 +12,12 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 use std::{
     borrow::Cow,
-    ffi::OsString,
     fmt::{Display, Formatter},
-    fs::{create_dir, exists, metadata, File},
-    io::Write,
     path::{Path, PathBuf},
-    process::{ExitStatus, Stdio},
+    process::ExitStatus,
     str::FromStr,
 };
-
-use log::{info, trace, warn};
 use serde::{Deserialize, Serialize};
-use tokio::{io::AsyncReadExt, process::Command};
 
 use crate::app::AppLicense;
 #[derive(Default, Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
@@ -329,6 +323,7 @@ impl crate::app::AppOper for Rustup {
         }
         #[cfg(windows)]
         {
+            _ = info; 
             todo!()
         }
         #[cfg(all(not(windows), not(unix)))]
