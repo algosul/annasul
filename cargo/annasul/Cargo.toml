@@ -37,5 +37,5 @@ serde = { version = "1.*", features = ["derive"] }
 log = { version = "0.4", features = ["serde", "kv_serde"] }
 reqwest = { version = "0.11", features = ["blocking"] }
 env_logger = { version = "0.11" }
-gtk4 = { version = "0.6", features = ["v4_10"], optional = true }
+gtk4 = { version = "0.9", features = ["v4_10"], optional = true }
 glib = { version = "0.20", features = [], optional = true }

@@ -12,12 +12,24 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 use std::{
     borrow::Cow,
+    env,
+    ffi::{OsStr, OsString},
     fmt::{Display, Formatter},
+    fs::{File, create_dir, exists},
+    io::{Write, stderr, stdout},
+    os::windows::ffi::OsStringExt,
     path::{Path, PathBuf},
-    process::ExitStatus,
+    process::{ExitStatus, Stdio},
     str::FromStr,
 };
+
+use log::{info, trace, warn};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use tokio::{
+    io::{AsyncRead, AsyncReadExt},
+    process::Command,
+};
 
 use crate::app::AppLicense;
 #[derive(Default, Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
@@ -97,10 +109,10 @@ pub enum Profile {
 }
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct InstallCustomInfo {
-    default_host_triple:  HostTriple,
-    default_toolchain:    Toolchain,
-    profile:              Profile,
-    modify_path_variable: bool,
+    pub default_host_triple:  HostTriple,
+    pub default_toolchain:    Toolchain,
+    pub profile:              Profile,
+    pub modify_path_variable: bool,
 }
 #[derive(Default, Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 pub enum InstallInfo {
@@ -122,6 +134,25 @@ async fn download_rustup_init_sh() -> Result<()> {
     }
     let mut file = File::create("./cache/rustup-init.sh").map_err(Error::IOError)?;
     file.write_all(content.as_bytes()).map_err(Error::IOError)?;
+    Ok(())
+}
+#[cfg(windows)]
+async fn download_rustup_init_exe() -> Result<()> {
+    let url = format!("https://win.rustup.rs/{}", env::consts::ARCH);
+    info!("url: {url}");
+    if !exists("./cache").map_err(Error::IOError)? {
+        create_dir("cache").map_err(Error::IOError)?;
+    }
+    let client = Client::new();
+    let response = client.get(url).send().await.map_err(Error::RequestError)?;
+    if response.status().is_success() {
+        let mut file = File::create("./cache/rustup-init.exe").map_err(Error::IOError)?;
+        let bytes = response.bytes().await.map_err(Error::RequestError)?;
+        file.write_all(bytes.as_ref()).map_err(Error::IOError)?;
+        info!("Download OK");
+    } else {
+        panic!("Download failed, Code: {}", response.status());
+    }
     Ok(())
 }
 #[cfg(unix)]
@@ -307,10 +338,10 @@ impl crate::app::AppOper for Rustup {
             warn!("Command finished with stderr: \n{stderr_buf}");
             if exit_status.success() {
                 Ok(Self {
-                    // ~/.config
+                    // ~/.cargo
                     home_path: std::env::home_dir()
                         .ok_or(Error::FailedToGetHomeDir)?
-                        .join(".config"),
+                        .join(".cargo"),
                 })
             } else {
                 Err(Error::Failed {
@@ -323,8 +354,75 @@ impl crate::app::AppOper for Rustup {
         }
         #[cfg(windows)]
         {
-            _ = info; 
-            todo!()
+            // https://win.rustup.rs/x86_64
+            trace!("Installing Rustup with info: {info:?}");
+            // download_rustup_init_exe().await?;
+            // trace!("Downloaded rustup-init.exe successfully");
+            let mut command = Command::new("./cache/rustup-init.exe");
+            let command = command.stdin(Stdio::null()).stdout(stdout()).stderr(stderr());
+            let mut command = match info {
+                InstallInfo::Default => command.arg("-y"),
+                InstallInfo::Custom(InstallCustomInfo {
+                    default_host_triple,
+                    default_toolchain,
+                    profile,
+                    modify_path_variable,
+                }) => {
+                    let command = command
+                        .arg("-y")
+                        // .arg(format!("--default-host={default_host_triple}"))
+                        .arg(format!("--default-toolchain={default_toolchain}"))
+                        .arg(format!("--profile={profile}"));
+                    if modify_path_variable {
+                        command
+                    } else {
+                        command.arg("--no-modify-path")
+                    }
+                }
+            }
+            .spawn()
+            .map_err(Error::IOError)?;
+            trace!("Command spawned successfully");
+            // let (mut stdout, mut stderr) = (
+            //     command
+            //         .stdout
+            //         .take()
+            //         .ok_or(Error::InnerError("Command 'rustup-init': stdout is not available".into()))?,
+            //     command
+            //         .stderr
+            //         .take()
+            //         .ok_or(Error::InnerError("Command 'rustup-init': stderr is not available".into()))?,
+            // );
+            let exit_status = command.wait().await.map_err(Error::IOError)?;
+            trace!("Command finished with exit status: {exit_status}");
+            let (mut stdout_buf, mut stderr_buf) = (Vec::new(), Vec::new());
+            // stdout.read_to_end(&mut stdout_buf).await.map_err(Error::IOError)?;
+            // stderr.read_to_end(&mut stderr_buf).await.map_err(Error::IOError)?;
+            let (stdout_buf, stderr_buf) = (
+                unsafe { OsString::from_encoded_bytes_unchecked(stdout_buf) }
+                    .to_string_lossy()
+                    .into_owned(),
+                unsafe { OsString::from_encoded_bytes_unchecked(stderr_buf) }
+                    .to_string_lossy()
+                    .into_owned(),
+            );
+            info!("Command finished with stdout: \n{stdout_buf}");
+            warn!("Command finished with stderr: \n{stderr_buf}");
+            if exit_status.success() {
+                Ok(Self {
+                    // ~/.cargo
+                    home_path: std::env::home_dir()
+                        .ok_or(Error::FailedToGetHomeDir)?
+                        .join(".cargo"),
+                })
+            } else {
+                Err(Error::Failed {
+                    exit_status,
+                    stdin: "".into(),
+                    stdout: stdout_buf.into(),
+                    stderr: stderr_buf.into(),
+                })
+            }
         }
         #[cfg(all(not(windows), not(unix)))]
         {
