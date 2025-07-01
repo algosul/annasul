@@ -1,0 +1,9 @@
+//!
+//! 文档注释
+//!
+
+/// main函数
+fn main() {
+    println!("Hello, world!");
+}
+
