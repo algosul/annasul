@@ -11,7 +11,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>. # app
 //! ```no_run
-//! println!("Hello");
 //! let rustup = tokio::runtime::Runtime::new()
 //!     .unwrap()
 //!     .block_on(async {
