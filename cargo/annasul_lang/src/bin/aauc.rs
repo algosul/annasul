@@ -25,9 +25,10 @@ fn main() {
     let args = Cli::parse();
     for input in args.inputs {
         println!("-----{:?}-----", input);
-        let tokens: Vec<_> = AnnasulScanner::new(BufReader::new(File::open(input).unwrap()))
-            .into_iter()
-            .collect();
+        let tokens: Vec<_> =
+            AnnasulScanner::new(BufReader::new(File::open(input).unwrap()))
+                .into_iter()
+                .collect();
         println!("{:?}", tokens);
     }
 }

@@ -20,7 +20,18 @@ use serde::{Deserialize, Serialize};
 #[cfg(any(doc, feature = "app-apps"))]
 pub mod apps;
 /// application license
-#[derive(Default, Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Serialize, Deserialize,)]
+#[derive(
+    Default, 
+    Debug, 
+    Clone, 
+    Eq, 
+    PartialEq, 
+    Hash, 
+    Ord, 
+    PartialOrd, 
+    Serialize, 
+    Deserialize
+)]
 pub enum AppLicense {
     #[default]
     Unknown,

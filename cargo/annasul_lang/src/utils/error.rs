@@ -17,6 +17,6 @@ pub struct Error {
 }
 #[derive(Debug)]
 pub struct ErrorPosition {
-    col: usize,
+    col:  usize,
     line: usize,
 }

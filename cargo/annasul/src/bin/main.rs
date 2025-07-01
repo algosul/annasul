@@ -22,11 +22,28 @@ use annasul::app::{
     apps::rust::{HostTriple, InstallCustomInfo, InstallInfo, Profile, Rustup, Toolchain},
 };
 use glib::SignalHandlerId;
-use gtk4::{Application, ApplicationWindow, Box, Button, ComboBoxText, DropDown, Entry, Label, Notebook, Orientation, StringList, StringObject, glib::ExitCode, prelude::*, MessageDialog};
-use gtk4::subclass::dialog;
-use tokio::join;
-use tokio::runtime::{Handle, Runtime};
-use tokio::sync::Mutex;
+use gtk4::{
+    Application,
+    ApplicationWindow,
+    Box,
+    Button,
+    ComboBoxText,
+    DropDown,
+    Entry,
+    Label,
+    MessageDialog,
+    Notebook,
+    Orientation,
+    StringList,
+    StringObject,
+    glib::ExitCode,
+    prelude::*,
+};
+use tokio::{
+    join,
+    runtime::Runtime,
+    sync::Mutex,
+};
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 struct DronDownBuilder<'a, T> {
     all: &'a [T],
@@ -123,7 +140,8 @@ static DEFAULT_HOST_TRIPLE: LazyLock<Mutex<HostTriple>> =
 static DEFAULT_TOOLCHAIN: LazyLock<Mutex<Toolchain>> =
     LazyLock::new(|| Mutex::new(Default::default()));
 static PROFILE: LazyLock<Mutex<Profile>> = LazyLock::new(|| Mutex::new(Default::default()));
-static MODIFY_PATH_VARIABLE: LazyLock<Mutex<bool>> = LazyLock::new(|| Mutex::new(InstallCustomInfo::default().modify_path_variable));
+static MODIFY_PATH_VARIABLE: LazyLock<Mutex<bool>> =
+    LazyLock::new(|| Mutex::new(InstallCustomInfo::default().modify_path_variable));
 static INSTALL_THREAD: std::sync::Mutex<Option<tokio::task::JoinHandle<()>>> =
     std::sync::Mutex::new(None);
 fn main() -> ExitCode {
@@ -144,7 +162,7 @@ fn main() -> ExitCode {
             vbox.append(&build_dropdown(
                 &[Profile::Minimal, Profile::Default, Profile::Complete],
                 |profile| {
-                    *Runtime::new().unwrap().block_on(async { PROFILE.lock().await}) = *profile;
+                    *Runtime::new().unwrap().block_on(async { PROFILE.lock().await }) = *profile;
                     println!("profile: {profile}");
                 },
             ));
@@ -156,7 +174,8 @@ fn main() -> ExitCode {
                     Toolchain::None,
                 ],
                 |toolchain| {
-                    *Runtime::new().unwrap().block_on(async { DEFAULT_TOOLCHAIN.lock().await}) = *toolchain;
+                    *Runtime::new().unwrap().block_on(async { DEFAULT_TOOLCHAIN.lock().await }) =
+                        *toolchain;
                     println!("toolchain: {toolchain}");
                 },
             ));
@@ -164,8 +183,10 @@ fn main() -> ExitCode {
                 &NotebookBuilder::new()
                     .all(&[HostTriple::Host, HostTriple::Target("".to_string())])
                     .on_change(|host_triple| {
-
-                        *Runtime::new().unwrap().block_on(async { DEFAULT_HOST_TRIPLE.lock().await}) = host_triple.clone();
+                        *Runtime::new()
+                            .unwrap()
+                            .block_on(async { DEFAULT_HOST_TRIPLE.lock().await }) =
+                            host_triple.clone();
                         println!("host_triple: {host_triple}");
                         true
                     })
@@ -183,7 +204,7 @@ fn main() -> ExitCode {
                         button.set_label("Installed（已安装）");
                     } else {
                         button.set_label("Already Installing（正在安装）");
-                    } 
+                    }
                 }
                 INSTALL_THREAD
                     .replace(Some(Runtime::new().unwrap().spawn(async move {
@@ -195,7 +216,10 @@ fn main() -> ExitCode {
                         }))
                         .await
                         .unwrap();
-                        let dialog = MessageDialog::builder().title(env!("CARGO_PKG_NAME")).text("Done! 安装成功！").build();
+                        let dialog = MessageDialog::builder()
+                            .title(env!("CARGO_PKG_NAME"))
+                            .text("Done! 安装成功！")
+                            .build();
                         dialog.run_async(|obj, answer| {
                             obj.close();
                         });
@@ -206,8 +230,12 @@ fn main() -> ExitCode {
             notebook.append_page(&vbox, Some(&Label::new(Some(&format!("Preset {i}")))));
         }
     });
-    app.connect_shutdown(|_| if let Some(install_thread) = INSTALL_THREAD.lock().unwrap().take() {
-         Runtime::new().unwrap().block_on(async { join!(install_thread).0.unwrap(); }); 
+    app.connect_shutdown(|_| {
+        if let Some(install_thread) = INSTALL_THREAD.lock().unwrap().take() {
+            Runtime::new().unwrap().block_on(async {
+                join!(install_thread).0.unwrap();
+            });
+        }
     });
     app.run()
 }
