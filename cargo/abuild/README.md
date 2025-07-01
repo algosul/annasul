@@ -22,7 +22,7 @@ $ abuild new -w my-worksapce
 $ cd my-workspace
 $ abuild new -j my-project
 ...
-$ vi ./my-project/main.rs # edit your code
+$ vi ./my-project/src/main.rs # edit your code
 $ abuild build
 ...
 $ ./target/debug/my-project
@@ -56,7 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Targets::host()?
             Targets::builder()
             	.host()
-           		.build()?
+			.build()?
     	)
     	.build()?
     	.parse_args()
