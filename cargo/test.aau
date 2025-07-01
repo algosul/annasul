@@ -1,8 +1,8 @@
 //!
-//! 文档注释
+//! Notes
 //!
 
-/// main函数
+/// main function
 fn main() {
     println!("Hello, world!");
 }
