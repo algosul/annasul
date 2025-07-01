@@ -5,13 +5,13 @@ exclude = []
 
 [workspace.package]
 version = "0.0.1"
-authors = ["yuanair@github.com"]
-homepage = "https://yuanair.github.io/annasul"
-repository = "https://github.com/yuanair/annasul"
-keywords = ["annasul"]
+authors = ["algosul@github.com"]
+homepage = "https://github.com/algosul/annasul"
+repository = "https://github.com/algosul/annasul"
+keywords = ["annasul", "build"]
 license = "AGPL-3.0-only"
 edition = "2024"
-description = "User-friendly yet personalized tool library"
+description = "Some user-friendly yet personalized tools"
 documentation = "https://docs.rs/annasul"
 
 [workspace.dependencies]
