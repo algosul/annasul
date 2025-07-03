@@ -1,15 +1,4 @@
-// Copyright (c) 2025 air (https://yuanair.github.io).
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published by
-// the Free Software Foundation, version 3 of the License only.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Affero General Public License for more details.
-//
-// You should have received a copy of the GNU Affero General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>. a
+a
 use std::fmt::Display;
 
 #[cfg(feature = "serde")]
@@ -37,8 +26,8 @@ pub struct Comment {
     /// see [CommentLineType]
     comment_line_type: CommentLineType,
     /// see [CommentType]
-    comment_type:      CommentType,
-    comment:           String,
+    comment_type: CommentType,
+    comment: String,
 }
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Hash, Ord, PartialOrd, PartialEq, Eq)]
@@ -71,8 +60,11 @@ pub struct Identifier {
 
 ///
 /// serde is not support f16&f128 now
-/// 
-#[cfg_attr(all(feature = "serde", not(any(feature = "unstable-f16", feature = "unstable-f128"))), derive(Serialize, Deserialize))]
+///
+#[cfg_attr(
+    all(feature = "serde", not(any(feature = "unstable-f16", feature = "unstable-f128"))),
+    derive(Serialize, Deserialize)
+)]
 #[derive(Debug, Clone, PartialOrd, PartialEq)]
 pub enum Literal {
     U8(u8),
