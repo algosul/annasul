@@ -1,17 +1,24 @@
 use std::{collections::HashMap, fmt::Debug, sync::Arc};
 
+use commands::ProjectCommand;
+use sources::ProjectSources;
+
 use crate::{
     profile::Profile,
+    project::sources::ProjectSourcesInDir,
     utils::{Builder, HasBuilder},
 };
+pub mod commands;
+pub mod sources;
 /// ```
 /// # use std::sync::Arc;
 /// use abuild::{
 ///     profile::{DevProfile, ReleaseProfile},
-///     project::Project,
+///     project::{Project, commands::BuildCommand},
 ///     utils::{Builder, HasBuilder},
 /// };
 /// Project::builder()
+///     .command(Arc::new(BuildCommand::default()))
 ///     .profile("debug", Arc::new(DevProfile::default()))
 ///     .profile("release", Arc::new(ReleaseProfile::default()))
 ///     .build()
@@ -21,36 +28,31 @@ use crate::{
 pub struct Project {
     commands: HashMap<String, Arc<dyn ProjectCommand>>,
     profiles: HashMap<String, Arc<dyn Profile>>,
+    sources:  Arc<dyn ProjectSources>,
 }
 #[derive(Debug, Clone)]
 pub struct ProjectBuilder {
     commands: HashMap<String, Arc<dyn ProjectCommand>>,
     profiles: HashMap<String, Arc<dyn Profile>>,
-}
-pub trait ProjectCommand: Debug {
-    fn name(&self) -> String;
-    fn try_do(
-        &self, project: &mut Project, args: &str,
-    ) -> Result<Box<dyn std::any::Any>, Box<dyn std::error::Error>>;
-    fn try_undo(
-        &self, project: &mut Project, cache: &mut dyn std::any::Any, args: &str,
-    ) -> Result<(), Box<dyn std::error::Error>>;
-    fn try_redo(
-        &self, project: &mut Project, cache: &mut dyn std::any::Any, args: &str,
-    ) -> Result<(), Box<dyn std::error::Error>>;
+    sources:  Arc<dyn ProjectSources>,
 }
 impl Builder for ProjectBuilder {
     type Error = ();
     type Output = Project;
 
     fn new() -> Self {
-        Self { commands: HashMap::new(), profiles: HashMap::new() }
+        Self {
+            commands: HashMap::new(),
+            profiles: HashMap::new(),
+            sources:  Arc::new(ProjectSourcesInDir::new("src")),
+        }
     }
 
     fn build(&self) -> Result<Self::Output, Self::Error> {
         Ok(Project {
             commands: self.commands.clone(),
             profiles: self.profiles.clone(),
+            sources:  self.sources.clone(),
         })
     }
 }
@@ -59,15 +61,15 @@ impl HasBuilder for Project {
 }
 impl ProjectBuilder {
     pub fn command(&mut self, command: Arc<dyn ProjectCommand>) -> &mut Self {
-        self.commands.insert(command.name(), command);
+        self.commands.insert(command.tag(), command);
         self
     }
 
     pub fn commands(
-        &mut self, commands: &[Arc<dyn ProjectCommand>],
+        &mut self, commands: impl Iterator<Item = Arc<dyn ProjectCommand>>,
     ) -> &mut Self {
         for command in commands {
-            self.command(command.clone());
+            self.command(command);
         }
         self
     }
@@ -80,11 +82,16 @@ impl ProjectBuilder {
     }
 
     pub fn profiles(
-        &mut self, profiles: &[(String, Arc<dyn Profile>)],
+        &mut self, profiles: impl Iterator<Item = (String, Arc<dyn Profile>)>,
     ) -> &mut Self {
         for (name, profile) in profiles {
-            self.profile(name.clone(), profile.clone());
+            self.profile(name, profile);
         }
+        self
+    }
+
+    pub fn sources(&mut self, source: Arc<dyn ProjectSources>) -> &mut Self {
+        self.sources = source;
         self
     }
 }
