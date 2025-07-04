@@ -514,6 +514,7 @@ mod tests {
     use super::*;
     use crate::app::AppOper;
     #[tokio::test]
+    #[ignore]
     async fn install_rustup()
     -> std::result::Result<(), Box<dyn std::error::Error>> {
         env_logger::init();

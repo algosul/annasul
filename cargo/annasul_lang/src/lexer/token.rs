@@ -1,6 +1,6 @@
-a
 use std::fmt::Display;
 
+use serde::Serializer;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -26,8 +26,8 @@ pub struct Comment {
     /// see [CommentLineType]
     comment_line_type: CommentLineType,
     /// see [CommentType]
-    comment_type: CommentType,
-    comment: String,
+    comment_type:      CommentType,
+    comment:           String,
 }
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Hash, Ord, PartialOrd, PartialEq, Eq)]
@@ -57,14 +57,8 @@ pub struct Operator {
 pub struct Identifier {
     inner: String,
 }
-
-///
 /// serde is not support f16&f128 now
-///
-#[cfg_attr(
-    all(feature = "serde", not(any(feature = "unstable-f16", feature = "unstable-f128"))),
-    derive(Serialize, Deserialize)
-)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, PartialOrd, PartialEq)]
 pub enum Literal {
     U8(u8),
@@ -78,11 +72,11 @@ pub enum Literal {
     I64(i64),
     I128(i128),
     #[cfg(feature = "unstable-f16")]
-    F16(f16),
+    F16(#[serde(skip_serializing, skip_deserializing)] f16),
     F32(f32),
     F64(f64),
     #[cfg(feature = "unstable-f128")]
-    F128(f128),
+    F128(#[serde(skip_serializing, skip_deserializing)] f128),
     Bool(bool),
     Char(char),
     String(String),

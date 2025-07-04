@@ -1,5 +1,4 @@
-use std::fmt::Debug;
-use std::path::Path;
+use std::{fmt::Debug, path::Path};
 
 use crate::{
     lang::ComplierInfo,
@@ -29,9 +28,13 @@ pub enum OptLevel {
 }
 pub trait Profile: Debug {
     fn compile_option(
-        &self, file_path: Path, compiler_info: &ComplierInfo,
+        &self, file_path: &Path, compiler_info: &ComplierInfo,
     ) -> CompileOptions;
 }
+#[derive(Default, Debug, Clone)]
+pub struct DevProfile;
+#[derive(Default, Debug, Clone)]
+pub struct ReleaseProfile;
 #[derive(Debug, Clone)]
 pub enum DebugInfoOption {
     /// none of debug information
@@ -120,7 +123,9 @@ impl Builder for CompilerOptionsBuilder {
 
     fn new() -> Self { Self {} }
 
-    fn build(self) -> Result<Self::Output, Self::Error> { Ok(CompileOptions::dev()) }
+    fn build(&self) -> Result<Self::Output, Self::Error> {
+        Ok(CompileOptions::dev())
+    }
 }
 impl CompileOptions {
     pub fn dev() -> Self {
@@ -129,5 +134,19 @@ impl CompileOptions {
 
     pub fn release() -> Self {
         Self { profile: Some(CompileProfile::Release), ..Default::default() }
+    }
+}
+impl Profile for DevProfile {
+    fn compile_option(
+        &self, _file_path: &Path, _compiler_info: &ComplierInfo,
+    ) -> CompileOptions {
+        CompileOptions::dev()
+    }
+}
+impl Profile for ReleaseProfile {
+    fn compile_option(
+        &self, _file_path: &Path, _compiler_info: &ComplierInfo,
+    ) -> CompileOptions {
+        CompileOptions::release()
     }
 }

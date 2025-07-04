@@ -5,9 +5,17 @@ use crate::{
     utils::{Builder, HasBuilder},
 };
 /// ```
-/// # use abuild::project::Project;
-/// use abuild::utils::{Builder, HasBuilder};
-/// Project::builder().build().unwrap();
+/// # use std::sync::Arc;
+/// use abuild::{
+///     profile::{DevProfile, ReleaseProfile},
+///     project::Project,
+///     utils::{Builder, HasBuilder},
+/// };
+/// Project::builder()
+///     .profile("debug", Arc::new(DevProfile::default()))
+///     .profile("release", Arc::new(ReleaseProfile::default()))
+///     .build()
+///     .unwrap();
 /// ```
 #[derive(Debug, Clone)]
 pub struct Project {
@@ -39,7 +47,7 @@ impl Builder for ProjectBuilder {
         Self { commands: HashMap::new(), profiles: HashMap::new() }
     }
 
-    fn build(self) -> Result<Self::Output, Self::Error> {
+    fn build(&self) -> Result<Self::Output, Self::Error> {
         Ok(Project {
             commands: self.commands.clone(),
             profiles: self.profiles.clone(),
@@ -50,26 +58,28 @@ impl HasBuilder for Project {
     type Builder = ProjectBuilder;
 }
 impl ProjectBuilder {
-    fn command(&mut self, command: Arc<dyn ProjectCommand>) -> &mut Self {
+    pub fn command(&mut self, command: Arc<dyn ProjectCommand>) -> &mut Self {
         self.commands.insert(command.name(), command);
         self
     }
 
-    fn commands(&mut self, commands: &[Arc<dyn ProjectCommand>]) -> &mut Self {
+    pub fn commands(
+        &mut self, commands: &[Arc<dyn ProjectCommand>],
+    ) -> &mut Self {
         for command in commands {
             self.command(command.clone());
         }
         self
     }
 
-    fn profile(
-        &mut self, name: String, profile: Arc<dyn Profile>,
+    pub fn profile(
+        &mut self, name: impl Into<String>, profile: Arc<dyn Profile>,
     ) -> &mut Self {
-        self.profiles.insert(name, profile);
+        self.profiles.insert(name.into(), profile);
         self
     }
 
-    fn profiles(
+    pub fn profiles(
         &mut self, profiles: &[(String, Arc<dyn Profile>)],
     ) -> &mut Self {
         for (name, profile) in profiles {

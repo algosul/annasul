@@ -4,16 +4,16 @@
 
 ## Example
 
-```
+```text
 let number = box 1; // let number: i32.Box = box 1;
 println!("{*number}"); // output `1` and newline
 ```
 
 equivalent to
 
-```ignore
+```no_run
 fn main() {
-    let number = box 1; // let number = Box::new(1); 
+    let number = Box::new(1); 
     println!("{}", *number)
 }
 ```
@@ -41,7 +41,7 @@ fn main() {
 
 ## Function
 
-```
+```text
 fn function(arg1: T1, arg2: T2, ...) -> ResultType {
     let result: ResultType;
     // ...
