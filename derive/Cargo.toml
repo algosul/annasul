@@ -1,10 +1,12 @@
+cargo-features = ["public-dependency"]
+
 [package]
 name = "algosul-derive"
-version.workspace = true
+version = "0.0.5"
 authors.workspace = true
 repository.workspace = true
 keywords.workspace = true
-license.workspace = true
+license-file.workspace = true
 edition.workspace = true
 description.workspace = true
 readme.workspace = true
@@ -17,8 +19,7 @@ proc-macro = true
 default = []
 
 [package.metadata.docs.rs]
-features = []
-rustdoc-args = []
+rustdoc-args = ["-cfg", "docsrs"]
 
 [dependencies]
 env_logger.workspace = true

@@ -1,10 +1,12 @@
+cargo-features = ["public-dependency"]
+
 [package]
 name = "algosul"
-version.workspace = true
+version = "0.0.5"
 authors.workspace = true
 repository.workspace = true
 keywords.workspace = true
-license.workspace = true
+license-file.workspace = true
 edition.workspace = true
 description.workspace = true
 readme.workspace = true
@@ -25,24 +27,6 @@ required-features = ["asset-image", "asset-text", "macros", "rayon"]
 
 [features]
 default = ["app-apps", "asset"]
-full = [
-    "app",
-    "app-apps",
-    "asset",
-    "asset-text",
-    "asset-image",
-    "codegen",
-    "deps",
-    "dep:thiserror",
-    "macros",
-    "process",
-    "math",
-    "math-color",
-    "utils",
-    "utils-tokio",
-    "langs",
-    "unstable",
-]
 
 app = ["process"]
 app-apps = ["app", "utils-tokio", "dep:reqwest", "dep:regex", "dep:thiserror"]
@@ -52,10 +36,6 @@ asset-text = ["asset", "dep:strfmt", "dep:itertools"]
 asset-image = ["asset", "dep:image"]
 
 codegen = ["algosul-core/codegen"]
-
-deps = ["algosul-core/deps"]
-deps-thiserror = ["deps", "dep:thiserror"]
-deps-itertools = ["deps", "dep:itertools"]
 
 math = ["dep:algosul-math"]
 math-color = ["math", "algosul-math/color"]
@@ -72,8 +52,7 @@ langs = []
 unstable = []
 
 [package.metadata.docs.rs]
-features = ["full"]
-rustdoc-args = []
+rustdoc-args = ["-cfg", "docsrs"]
 
 [dependencies]
 algosul-derive = { workspace = true, features = [], optional = true }
@@ -114,11 +93,10 @@ glob = { workspace = true, features = [] }
 resolver = "3"
 members = [".", "core", "derive", "math"]
 [workspace.package]
-version = "0.0.5"
-authors = ["algosul@github.com"]
+authors = ["algosul <hxb.air@gmail.com>"]
 repository = "https://github.com/algosul/algosul"
 keywords = ["algosul"]
-license = "AGPL-3.0-only"
+license-file = "LICENSE"
 edition = "2024"
 description = "Some user-friendly yet personalized tools"
 readme = "README.md"

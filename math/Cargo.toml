@@ -1,13 +1,18 @@
+cargo-features = ["public-dependency"]
+
 [package]
 name = "algosul-math"
-version.workspace = true
+version = "0.0.5"
 authors.workspace = true
 repository.workspace = true
 keywords.workspace = true
-license.workspace = true
+license-file.workspace = true
 edition.workspace = true
 description.workspace = true
 readme.workspace = true
+
+[package.metadata.docs.rs]
+rustdoc-args = ["-cfg", "docsrs"]
 
 [features]
 color = []
