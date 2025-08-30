@@ -1,0 +1,28 @@
+cargo-features = ["public-dependency"]
+
+[package]
+name = "algosul-math"
+version = "0.0.5"
+authors.workspace = true
+repository.workspace = true
+keywords.workspace = true
+license-file.workspace = true
+edition.workspace = true
+description.workspace = true
+readme.workspace = true
+
+[package.metadata.docs.rs]
+rustdoc-args = ["-cfg", "docsrs"]
+
+[features]
+color = []
+serde = ["dep:serde", "num/serde"]
+unstable = []
+unstable-f16-f128 = ["unstable"]
+
+[dependencies]
+algosul-derive = { workspace = true, features = [] }
+serde = { workspace = true, features = ["derive"], optional = true }
+num = { workspace = true, features = [] }
+num-traits = { workspace = true, features = [] }
+thiserror = { workspace = true, features = [] }

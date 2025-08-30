@@ -1,0 +1,43 @@
+cargo-features = ["public-dependency"]
+
+[package]
+name = "algosul-core"
+version = "0.0.5"
+authors.workspace = true
+repository.workspace = true
+keywords.workspace = true
+license-file.workspace = true
+edition.workspace = true
+description.workspace = true
+readme.workspace = true
+
+[features]
+default = ["codegen"]
+codegen = ["unicode-xid", "syn", "proc-macro2", "quote", "glob"]
+utils = []
+macros = []
+
+[package.metadata.docs.rs]
+rustdoc-args = ["-cfg", "docsrs"]
+
+[dependencies.proc-macro2]
+version = "1.0.95"
+optional = true
+
+[dependencies.quote]
+version = "1.0.40"
+optional = true
+
+[dependencies.syn]
+version = "2.0.104"
+features = ["full"]
+optional = true
+
+[dependencies.unicode-xid]
+version = "0.2.6"
+optional = true
+
+[dependencies.glob]
+version = "0.3.2"
+features = []
+optional = true
