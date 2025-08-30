@@ -1,27 +1,20 @@
+#![feature(string_from_utf8_lossy_owned)]
 use std::{
   borrow::Cow,
   fmt::{Display, Formatter},
   path::{Path, PathBuf},
 };
 
+use algosul_core::process::Process;
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 
-#[cfg(feature = "app-apps")]
+#[cfg(feature = "apps")]
 pub mod apps;
 /// application license
-#[derive(
-  Default,
-  Debug,
-  Clone,
-  Eq,
-  PartialEq,
-  Hash,
-  Ord,
-  PartialOrd,
-  Serialize,
-  Deserialize,
-)]
+#[derive(Default, Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize,))]
 pub enum AppLicense
 {
   #[default]
@@ -73,10 +66,10 @@ pub trait AppGetter: Sized + AppPath
 /// application operators
 pub trait AppOper: Sized + AppInfo
 {
-  type Installer: crate::process::Process;
-  type Reinstaller: crate::process::Process;
-  type Remover: crate::process::Process;
-  type Updater: crate::process::Process;
+  type Installer: Process;
+  type Reinstaller: Process;
+  type Remover: Process;
+  type Updater: Process;
   fn installer() -> impl Future<Output = Self::Result<Self::Installer>> + Send;
   fn reinstaller(
     self,

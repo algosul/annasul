@@ -12,7 +12,7 @@ use std::{
 use algosul_core::{args, cows, utils::std::MapToArgs};
 use log::info;
 
-use crate::app::{
+use crate::{
   apps::{rust, rust::utils},
   AppInfo,
   AppLicense,

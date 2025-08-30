@@ -2,11 +2,14 @@ use std::ops::Range;
 
 use algosul_derive::get;
 use num_traits::{float::FloatCore, Bounded, Euclid, Num, One};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::num::{NumLerp, NumNormalizeAngle, NumPercent, NumsRemap};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Color<T: Clone>
 {
   G(ColorG<T>),
@@ -176,6 +179,7 @@ macro_rules! impl_color {
     $($rest:tt)*
   ) => {
     #[derive(Default, Debug, Clone, Eq, PartialEq, Hash)]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     pub struct $name<T: Clone>(pub [T; $size]);
     impl<N: Num + Clone + NumPercent<N>> ColorRemap<N> for $name<N> {
       type Output<U: FloatCore + NumLerp<U> + From<N>> = $name<U>;

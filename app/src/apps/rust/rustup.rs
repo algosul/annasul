@@ -7,7 +7,9 @@ use std::{
   sync::Arc,
 };
 
+use algosul_core::{process::Process, utils::tokio::TokioChildExt};
 use log::{debug, info};
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 
@@ -18,18 +20,15 @@ use super::{
   Profile,
   Toolchain,
 };
-use crate::{
-  app::{AppLicense, AppPath},
-  process::Process,
-  utils::tokio::TokioChildExt,
-};
+use crate::{AppLicense, AppPath};
 
 #[derive(Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Rustup
 {
   home_path: Arc<PathBuf>,
 }
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct InstallCustomInfo
 {
   pub default_host_triple:  HostTriple,
@@ -37,41 +36,37 @@ pub struct InstallCustomInfo
   pub profile:              Profile,
   pub modify_path_variable: bool,
 }
-#[derive(
-  Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Default,
-)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum InstallInfo
 {
   #[default]
   Default,
   Custom(InstallCustomInfo),
 }
-#[derive(
-  Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Default,
-)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ReinstallInfo
 {
   #[default]
   Default,
   Custom(InstallCustomInfo),
 }
-#[derive(
-  Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Default,
-)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum RemoveInfo
 {
   #[default]
   Default,
 }
-#[derive(
-  Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Default,
-)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum UpdateInfo
 {
   #[default]
   Default,
 }
-impl crate::app::AppInfo for Rustup
+impl crate::AppInfo for Rustup
 {
   type Result<T> = super::Result<T>;
 
@@ -136,13 +131,13 @@ impl AppPath for Rustup
 }
 impl utils::RustAppExt for Rustup
 {
-  fn new(home_path: Arc<PathBuf>) -> crate::app::apps::rust::Result<Self>
+  fn new(home_path: Arc<PathBuf>) -> crate::apps::rust::Result<Self>
   {
     Ok(Self { home_path })
   }
 }
 type OnOutputFn = Box<dyn Fn(&[u8], &[u8]) + Send + Sync>;
-type StatusObserver<T> = crate::process::StatusObserver<T, super::Error>;
+type StatusObserver<T> = algosul_core::process::StatusObserver<T, super::Error>;
 #[derive(Default, Debug, Clone, Eq, PartialEq)]
 pub enum RustupInstallStatus
 {
@@ -496,7 +491,7 @@ impl Process for RustupUpdater
     Ok(())
   }
 }
-impl crate::app::AppOper for Rustup
+impl crate::AppOper for Rustup
 {
   type Installer = RustupInstaller;
   type Reinstaller = RustupReinstaller;
