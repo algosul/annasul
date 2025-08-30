@@ -8,7 +8,7 @@ use std::{
 use algosul_core::{args, cows};
 use tokio::process::Command;
 
-use crate::app::{apps::rust::utils, AppInfo, AppLicense, AppPath};
+use crate::{apps::rust::utils, AppInfo, AppLicense, AppPath};
 
 #[derive(Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Cargo
@@ -135,7 +135,7 @@ impl AppPath for Cargo
 }
 impl utils::RustAppExt for Cargo
 {
-  fn new(home_path: Arc<PathBuf>) -> crate::app::apps::rust::Result<Self>
+  fn new(home_path: Arc<PathBuf>) -> crate::apps::rust::Result<Self>
   {
     Ok(Self { home_path })
   }

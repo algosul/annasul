@@ -7,6 +7,7 @@ use std::{
   time::SystemTimeError,
 };
 
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::{sync::TryLockError, task::JoinError};
@@ -75,19 +76,8 @@ pub enum Error
   FailedToRun(String),
 }
 pub type Result<T> = std::result::Result<T, Error>;
-#[derive(
-  Default,
-  Debug,
-  Copy,
-  Clone,
-  Eq,
-  PartialEq,
-  Hash,
-  Ord,
-  PartialOrd,
-  Serialize,
-  Deserialize,
-)]
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Toolchain
 {
   #[default]
@@ -96,18 +86,8 @@ pub enum Toolchain
   Nightly,
   None,
 }
-#[derive(
-  Default,
-  Debug,
-  Clone,
-  Eq,
-  PartialEq,
-  Hash,
-  Ord,
-  PartialOrd,
-  Serialize,
-  Deserialize,
-)]
+#[derive(Default, Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum HostTriple
 {
   #[default]
@@ -115,19 +95,8 @@ pub enum HostTriple
   /// e.g. x86_64-unknown-linux-gnu
   Target(String),
 }
-#[derive(
-  Default,
-  Debug,
-  Copy,
-  Clone,
-  Eq,
-  PartialEq,
-  Hash,
-  Ord,
-  PartialOrd,
-  Serialize,
-  Deserialize,
-)]
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Profile
 {
   Minimal,
@@ -229,14 +198,12 @@ impl FromStr for Profile
 #[cfg(test)]
 mod tests
 {
+  use algosul_core::process::Process;
   use log::info;
   use utils::ToRustVersion;
 
   use super::*;
-  use crate::{
-    app::{AppGetter, AppOper},
-    process::Process,
-  };
+  use crate::{AppGetter, AppOper};
 
   #[tokio::test]
   #[ignore]

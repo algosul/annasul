@@ -1,5 +1,3 @@
-cargo-features = ["public-dependency"]
-
 [package]
 name = "algosul"
 version = "0.0.5"
@@ -23,24 +21,22 @@ crate-type = ["rlib"]
 [[test]]
 name = "asset"
 path = "tests/asset.rs"
-required-features = ["asset-image", "asset-text", "macros", "rayon"]
+required-features = ["asset-image", "asset-text", "rayon"]
 
 [features]
 default = ["app-apps", "asset"]
 
-app = ["process"]
-app-apps = ["app", "utils-tokio", "dep:reqwest", "dep:regex", "dep:thiserror"]
+serde = ["algosul-app/serde", "algosul-math/serde"]
+
+app = ["dep:algosul-app"]
+app-apps = ["algosul-app/apps"]
 
 asset = ["dep:toml"]
 asset-text = ["asset", "dep:strfmt", "dep:itertools"]
 asset-image = ["asset", "dep:image"]
 
-codegen = ["algosul-core/codegen"]
-
 math = ["dep:algosul-math"]
 math-color = ["math", "algosul-math/color"]
-
-macros = ["dep:algosul-derive"]
 
 process = []
 
@@ -55,13 +51,14 @@ unstable = []
 rustdoc-args = ["-cfg", "docsrs"]
 
 [dependencies]
-algosul-derive = { workspace = true, features = [], optional = true }
-algosul-core = { workspace = true, features = ["utils", "macros"] }
+algosul-app = { workspace = true, optional = true }
+algosul-derive = { workspace = true, features = [] }
+algosul-core = { workspace = true, features = [] }
 algosul-math = { workspace = true, features = [], optional = true }
 
 image = { workspace = true, features = ["serde"], optional = true }
 sys-locale = { workspace = true, optional = true }
-strfmt = { workspace = true, optional = true }
+strfmt = { workspace = true, optional = true, public = true }
 env_logger = { workspace = true }
 reqwest = { workspace = true, features = ["blocking"], optional = true }
 log = { workspace = true, features = ["serde", "kv_serde"] }
@@ -82,7 +79,7 @@ thiserror = { workspace = true, features = [], optional = true }
 rfd = { workspace = true, optional = true }
 strum = { workspace = true, features = ["derive"] }
 [build-dependencies]
-algosul-core = { workspace = true, features = ["codegen"] }
+algosul-core = { workspace = true }
 proc-macro2 = { workspace = true }
 syn = { workspace = true, features = ["full"] }
 log = { workspace = true, features = [] }
@@ -91,7 +88,7 @@ glob = { workspace = true, features = [] }
 
 [workspace]
 resolver = "3"
-members = [".", "core", "derive", "math"]
+members = [".", "app", "core", "derive", "math"]
 [workspace.package]
 authors = ["algosul <hxb.air@gmail.com>"]
 repository = "https://github.com/algosul/algosul"
@@ -102,6 +99,7 @@ description = "Some user-friendly yet personalized tools"
 readme = "README.md"
 
 [workspace.dependencies]
+algosul-app.path = "app"
 algosul-derive.path = "derive"
 algosul-core.path = "core"
 algosul-math.path = "math"
@@ -127,3 +125,4 @@ syn = "2.0.106"
 quote = "1.0.40"
 num = "0.4.3"
 num-traits = "0.2.19"
+unicode-xid = "0.2.6"

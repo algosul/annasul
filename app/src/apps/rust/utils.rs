@@ -9,7 +9,7 @@ use std::{
 
 use log::debug;
 
-use crate::app::{AppGetter, AppLicense, AppPath};
+use crate::{AppGetter, AppLicense, AppPath};
 
 pub fn get_home_dir() -> super::Result<PathBuf>
 {
