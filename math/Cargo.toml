@@ -1,0 +1,23 @@
+[package]
+name = "algosul-math"
+version.workspace = true
+authors.workspace = true
+repository.workspace = true
+keywords.workspace = true
+license.workspace = true
+edition.workspace = true
+description.workspace = true
+readme.workspace = true
+
+[features]
+color = []
+serde = ["dep:serde", "num/serde"]
+unstable = []
+unstable-f16-f128 = ["unstable"]
+
+[dependencies]
+algosul-derive = { workspace = true, features = [] }
+serde = { workspace = true, features = ["derive"], optional = true }
+num = { workspace = true, features = [] }
+num-traits = { workspace = true, features = [] }
+thiserror = { workspace = true, features = [] }
