@@ -51,10 +51,10 @@ unstable = []
 rustdoc-args = ["-cfg", "docsrs"]
 
 [dependencies]
-algosul-app = { workspace = true, optional = true }
+algosul-app = { workspace = true, optional = true, public = true }
 algosul-derive = { workspace = true, features = [] }
-algosul-core = { workspace = true, features = [] }
-algosul-math = { workspace = true, features = [], optional = true }
+algosul-core = { workspace = true, features = [], public = true }
+algosul-math = { workspace = true, features = [], optional = true, public = true }
 
 image = { workspace = true, features = ["serde"], optional = true }
 sys-locale = { workspace = true, optional = true }

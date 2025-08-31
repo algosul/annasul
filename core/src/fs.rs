@@ -2,6 +2,7 @@ use std::{
   fs,
   fs::ReadDir,
   io,
+  ops::{Deref, DerefMut},
   path::{Path, PathBuf},
 };
 
@@ -46,6 +47,27 @@ pub enum Error
     #[source]
     io_error: io::Error,
   },
+  #[error("Could not open file {path:?} (caused by {io_error})")]
+  OpenFile
+  {
+    path:     PathBuf,
+    #[source]
+    io_error: io::Error,
+  },
+  #[error("Could not create file {path:?} (caused by {io_error})")]
+  CreateFile
+  {
+    path:     PathBuf,
+    #[source]
+    io_error: io::Error,
+  },
+  #[error("Could not create new file {path:?} (caused by {io_error})")]
+  CreateNewFile
+  {
+    path:     PathBuf,
+    #[source]
+    io_error: io::Error,
+  },
   #[error(
     "Could not copy {from:?} to {to:?} (caused by not support {file_type:?})"
   )]
@@ -57,6 +79,9 @@ pub enum Error
   },
 }
 pub type Result<T> = std::result::Result<T, Error>;
+
+#[derive(Debug)]
+pub struct File(fs::File);
 
 pub fn create_dir_all(path: impl AsRef<Path>) -> Result<()>
 {
@@ -133,4 +158,55 @@ pub fn copy_dir(from: impl AsRef<Path>, to: impl AsRef<Path>) -> Result<()>
     }
   }
   Ok(())
+}
+impl File
+{
+  pub fn open(path: impl AsRef<Path>) -> Result<Self>
+  {
+    let path = path.as_ref();
+    fs::File::open(path)
+      .map_err(|io_error| Error::OpenFile {
+        path: path.to_path_buf(),
+        io_error,
+      })
+      .map(Self)
+  }
+
+  pub fn create(path: impl AsRef<Path>) -> Result<Self>
+  {
+    let path = path.as_ref();
+    fs::File::create(path)
+      .map_err(|io_error| Error::CreateFile {
+        path: path.to_path_buf(),
+        io_error,
+      })
+      .map(Self)
+  }
+
+  pub fn create_new(path: impl AsRef<Path>) -> Result<Self>
+  {
+    let path = path.as_ref();
+    fs::File::create_new(path)
+      .map_err(|io_error| Error::CreateNewFile {
+        path: path.to_path_buf(),
+        io_error,
+      })
+      .map(Self)
+  }
+}
+impl Deref for File
+{
+  type Target = fs::File;
+
+  fn deref(&self) -> &Self::Target
+  {
+    &self.0
+  }
+}
+impl DerefMut for File
+{
+  fn deref_mut(&mut self) -> &mut Self::Target
+  {
+    &mut self.0
+  }
 }
