@@ -82,6 +82,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+ "thiserror",
  "tokio",
  "unicode-xid",
 ]

@@ -23,3 +23,4 @@ unicode-xid = { workspace = true, public = true }
 glob = { workspace = true, public = true }
 tokio = { workspace = true, features = ["full"], public = true }
 bytes = { workspace = true, public = true }
+thiserror.workspace = true
