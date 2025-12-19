@@ -1,5 +1,4 @@
 use std::{
-  fmt::Display,
   fs,
   fs::{FileType, ReadDir},
   io,
