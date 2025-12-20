@@ -13,7 +13,6 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          submodules: true
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
