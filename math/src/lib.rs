@@ -6,7 +6,7 @@
 
 use std::ops::Range;
 
-use num_traits::{float::FloatCore, Bounded};
+use num_traits::{Bounded, float::FloatCore};
 
 #[cfg(feature = "color")]
 pub mod color;
