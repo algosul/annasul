@@ -3,6 +3,9 @@
 ## Dependencies
 
 + [Target](../../target.md)
++ [I/O](../../io.md)
++ toml (<https://crates.io/crates/toml>)
++ serde (<https://crates.io/crates/serde>)
 
 ## Mirrors
 
