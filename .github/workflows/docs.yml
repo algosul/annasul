@@ -1,0 +1,51 @@
+name: Docs
+
+on:
+  push:
+    branches: [ "release" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Rust dependencies and mdBook
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-all-crates: true
+      - name: Install mdBook
+        run: cargo install mdbook
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+      - name: Build docs
+        run: mdbook build docs --dest-dir book
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./book
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}/docs
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
