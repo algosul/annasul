@@ -1,4 +1,5 @@
 use std::{
+  borrow::Cow,
   env,
   fmt::{Display, Formatter},
   fs::Permissions,
@@ -62,16 +63,23 @@ impl<T: RustAppExt> AppGetter for T
     Self::new(Arc::new(get_home_dir()?.join(".cargo/")))
   }
 
-  #[cfg(unix)]
   async fn get_by_all_user() -> super::Result<Self>
   {
-    Self::new(Arc::new(PathBuf::from("/usr/local/bin")))
-  }
-
-  #[cfg(windows)]
-  async fn get_by_all_user() -> Result<Self, Self::Error>
-  {
-    Self::new(Arc::new(PathBuf::from(r"C:\Program Files\Rust stable GNU\")))
+    if cfg!(unix)
+    {
+      Self::new(Arc::new(PathBuf::from("/usr/local/bin")))
+    }
+    else if cfg!(windows)
+    {
+      Self::new(Arc::new(PathBuf::from(r"C:\Program Files\Rust stable GNU\")))
+    }
+    else
+    {
+      Err(super::Error::Unsupported(Cow::Owned(format!(
+        "{} is not supported",
+        env::consts::OS,
+      ))))
+    }
   }
 }
 impl ToRustVersion for String
