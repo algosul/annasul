@@ -6,4 +6,3 @@
 |   aarch   | arm (aarch32) | aarch64     |
 | loongarch | loongarch32   | loongarch64 |
 |   riscv   | riscv32imac   | riscv64gc   |
-
