@@ -1,3 +1,45 @@
+[workspace]
+resolver = "3"
+members = [".", "codegen", "app", "core", "derive", "math"]
+[workspace.package]
+authors = ["algosul <hxb.air@gmail.com>"]
+repository = "https://github.com/algosul/algosul-rs"
+keywords = ["algosul"]
+license-file = "LICENSE"
+edition = "2024"
+description = "Some user-friendly yet personalized tools"
+readme = "README.md"
+
+[workspace.dependencies]
+algosul-app.path = "app"
+algosul-derive.path = "derive"
+algosul-core.path = "core"
+algosul-math.path = "math"
+algosul-codegen.path = "codegen"
+image = "0.25.6"
+sys-locale = "0.3.2"
+strfmt = "0.2.5"
+env_logger = "0.11.8"
+reqwest = "0.13.3"
+log = "0.4.27"
+toml = "1.1.2"
+serde = "1.0.219"
+bytes = "1.10.1"
+tokio = "1.46.1"
+rayon = "1.10.0"
+itertools = "0.14.0"
+regex = "1.11.1"
+thiserror = "2.0.18"
+rfd = "0.17.2"
+strum = "0.28.0"
+glob = "0.3.3"
+proc-macro2 = "1.0.101"
+syn = "2.0.106"
+quote = "1.0.40"
+num = "0.4.3"
+num-traits = "0.2.19"
+unicode-xid = "0.2.6"
+
 [package]
 name = "algosul"
 version = "0.0.5"
@@ -28,6 +70,8 @@ default = ["app-apps", "asset"]
 
 serde = ["algosul-app/serde", "algosul-math/serde"]
 
+derive = ["dep:algosul-derive"]
+
 app = ["dep:algosul-app"]
 app-apps = ["algosul-app/apps"]
 
@@ -45,6 +89,8 @@ utils-tokio = ["utils", "dep:tokio", "dep:bytes"]
 
 langs = []
 
+no_std = ["algosul-core/no_std", "algosul-app/no_std", "algosul-math/no_std"]
+
 unstable = []
 
 [package.metadata.docs.rs]
@@ -52,9 +98,10 @@ rustdoc-args = ["-cfg", "docsrs"]
 
 [dependencies]
 algosul-app = { workspace = true, optional = true, public = true }
-algosul-derive = { workspace = true, features = [] }
+algosul-derive = { workspace = true, optional = true, features = [] }
 algosul-core = { workspace = true, features = [], public = true }
-algosul-math = { workspace = true, features = [], optional = true, public = true }
+algosul-math = { workspace = true, features = [
+], optional = true, public = true }
 
 image = { workspace = true, features = ["serde"], optional = true }
 sys-locale = { workspace = true, optional = true }
@@ -78,51 +125,11 @@ regex = { workspace = true, features = [], optional = true }
 thiserror = { workspace = true, features = [], optional = true }
 rfd = { workspace = true, optional = true }
 strum = { workspace = true, features = ["derive"] }
+
 [build-dependencies]
-algosul-core = { workspace = true }
+algosul-codegen = { workspace = true }
 proc-macro2 = { workspace = true }
 syn = { workspace = true, features = ["full"] }
 log = { workspace = true, features = [] }
 env_logger = { workspace = true, features = [] }
 glob = { workspace = true, features = [] }
-
-[workspace]
-resolver = "3"
-members = [".", "app", "core", "derive", "math"]
-[workspace.package]
-authors = ["algosul <hxb.air@gmail.com>"]
-repository = "https://github.com/algosul/algosul"
-keywords = ["algosul"]
-license-file = "LICENSE"
-edition = "2024"
-description = "Some user-friendly yet personalized tools"
-readme = "README.md"
-
-[workspace.dependencies]
-algosul-app.path = "app"
-algosul-derive.path = "derive"
-algosul-core.path = "core"
-algosul-math.path = "math"
-image = "0.25.6"
-sys-locale = "0.3.2"
-strfmt = "0.2.5"
-env_logger = "0.11.8"
-reqwest = "0.12.22"
-log = "0.4.27"
-toml = "0.9.2"
-serde = "1.0.219"
-bytes = "1.10.1"
-tokio = "1.46.1"
-rayon = "1.10.0"
-itertools = "0.14.0"
-regex = "1.11.1"
-thiserror = "1.0.69"
-rfd = "0.15.4"
-strum = "0.27.2"
-glob = "0.3.3"
-proc-macro2 = "1.0.101"
-syn = "2.0.106"
-quote = "1.0.40"
-num = "0.4.3"
-num-traits = "0.2.19"
-unicode-xid = "0.2.6"
