@@ -15,4 +15,4 @@ Some user-friendly yet personalized tools
 
 ## Documentation
 
-<https://algosul.github.io/algosul/docs>
+<https://algosul.github.io/algosul-rs/docs>
