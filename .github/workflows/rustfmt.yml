@@ -1,8 +1,10 @@
 name: Rust Format Check
 
 on:
+  push:
+    branches: [ "release" ]
   pull_request:
-    branches: [ release ]
+    branches: [ "release" ]
 
 jobs:
   rustfmt:

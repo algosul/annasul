@@ -1,9 +1,13 @@
 name: Multi-Platform Build
 
 on:
+  push:
+    branches: [ "release" ]
   pull_request:
-    branches:
-      - release
+    branches: [ "release" ]
+
+env:
+  CARGO_TERM_COLOR: always
 
 jobs:
   build:
@@ -20,7 +24,7 @@ jobs:
 
       - name: Install libssl-dev
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y libssl-dev
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev libwayland-dev
 
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
