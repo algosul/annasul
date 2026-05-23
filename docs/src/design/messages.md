@@ -28,7 +28,8 @@ Needs to implement [Message Trait](messages/message_trait.md)
 + [Message Type](#message-type)
 + [Message Content](#message-content)
 + Sending time
-+ Key of the message sending plugin (`sending_plugin_key`): Needs [Plugin Key](./ext/plugin_key.md)
++ Private ID of the message sending module (`sending_module_key`):
+  Needs [Module Private ID](./modules.md#module-private-id)
 + [Message Metadata](#message-metadata)
 
 ## Message
@@ -36,7 +37,7 @@ Needs to implement [Message Trait](messages/message_trait.md)
 + [Message Type](#message-type)
 + [Message Content](#message-content)
 + Sending time
-+ ID of the message sending plugin (`sending_plugin_id`): [Plugin ID](./ext/plugin_id.md)
++ ID of the message sending module (`sending_module_id`): [Module ID](./modules.md#module-id)
 + [Message Metadata](#message-metadata)
 
 ## Message interface
