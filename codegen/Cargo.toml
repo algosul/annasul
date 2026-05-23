@@ -1,5 +1,5 @@
 [package]
-name = "algosul-derive"
+name = "algosul-codegen"
 version = "0.0.5"
 authors.workspace = true
 repository.workspace = true
@@ -8,22 +8,13 @@ license-file.workspace = true
 edition.workspace = true
 description.workspace = true
 readme.workspace = true
-build = "build.rs"
-
-[lib]
-proc-macro = true
 
 [features]
 default = []
 
-[package.metadata.docs.rs]
-rustdoc-args = ["-cfg", "docsrs"]
-
 [dependencies]
-env_logger.workspace = true
-proc-macro2 = { workspace = true, features = [], public = true }
+proc-macro2 = { workspace = true, public = true }
 quote = { workspace = true, public = true }
 syn = { workspace = true, features = ["full"], public = true }
-log.workspace = true
-algosul-codegen = { workspace = true }
- 
+unicode-xid = { workspace = true, public = true }
+glob = { workspace = true, public = true }

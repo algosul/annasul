@@ -1,8 +1,8 @@
 use std::{error::Error, path::Path};
 
 pub trait FromPath: Sized {
-    type Error: Error;
-    fn from_path(path: impl AsRef<Path>) -> Result<Self, Self::Error>;
+  type Error: Error;
+  fn from_path(path: impl AsRef<Path>) -> Result<Self, Self::Error>;
 }
 // impl FromPath for ItemMod {
 //     type Error = io::Error;

@@ -3,18 +3,15 @@ use std::{
   ffi::{OsStr, OsString},
 };
 
-pub trait MapToArg<'b>
-{
+pub trait MapToArg<'b> {
   fn map_to_arg(self) -> Cow<'b, OsStr>;
 }
-pub trait MapToArgs<'b>
-{
+pub trait MapToArgs<'b> {
   fn map_to_args(self) -> impl Iterator<Item = Cow<'b, OsStr>>;
 }
 
 /// [issue: #1958](https://github.com/rust-lang/reference/issues/1958)
-pub trait CowExt<'a, T: ?Sized + ToOwned + 'a>
-{
+pub trait CowExt<'a, T: ?Sized + ToOwned + 'a> {
   fn map_ref_or_owned<'b, U: ?Sized + ToOwned, B, O>(
     self, b: B, o: O,
   ) -> Cow<'b, U>
@@ -26,8 +23,7 @@ pub trait CowExt<'a, T: ?Sized + ToOwned + 'a>
     B: FnOnce(&'a T) -> Cow<'b, U>,
     O: FnOnce(T::Owned) -> Cow<'b, U>;
 }
-impl<'a, T: ?Sized + ToOwned> CowExt<'a, T> for Cow<'a, T>
-{
+impl<'a, T: ?Sized + ToOwned> CowExt<'a, T> for Cow<'a, T> {
   #[inline]
   fn map_ref_or_owned<'b, U: ?Sized + ToOwned, B, O>(
     self, b: B, o: O,
@@ -36,8 +32,7 @@ impl<'a, T: ?Sized + ToOwned> CowExt<'a, T> for Cow<'a, T>
     B: FnOnce(&'a T) -> &'b U,
     O: FnOnce(T::Owned) -> U::Owned,
   {
-    match self
-    {
+    match self {
       Cow::Borrowed(borrow) => Cow::Borrowed(b(borrow)),
       Cow::Owned(owned) => Cow::Owned(o(owned)),
     }
@@ -49,8 +44,7 @@ impl<'a, T: ?Sized + ToOwned> CowExt<'a, T> for Cow<'a, T>
     B: FnOnce(&'a T) -> Cow<'b, U>,
     O: FnOnce(T::Owned) -> Cow<'b, U>,
   {
-    match self
-    {
+    match self {
       Cow::Borrowed(borrow) => b(borrow),
       Cow::Owned(owned) => o(owned),
     }
@@ -62,8 +56,7 @@ where
   S::Owned: Into<OsString>,
 {
   #[inline]
-  fn map_to_arg(self) -> Cow<'b, OsStr>
-  {
+  fn map_to_arg(self) -> Cow<'b, OsStr> {
     self.map_ref_or_owned(OsStr::new, Into::into)
   }
 }
@@ -74,26 +67,22 @@ where
   T: IntoIterator<Item = Cow<'a, S>>,
 {
   #[inline]
-  fn map_to_args(self) -> impl Iterator<Item = Cow<'b, OsStr>>
-  {
+  fn map_to_args(self) -> impl Iterator<Item = Cow<'b, OsStr>> {
     self.into_iter().map(MapToArg::map_to_arg)
   }
 }
 
 #[cfg(test)]
-mod tests
-{
+mod tests {
   use std::ffi::OsStr;
 
   use super::*;
   #[test]
-  fn test_demo()
-  {
+  fn test_demo() {
     demo("test");
   }
 
-  fn demo(input: &str)
-  {
+  fn demo(input: &str) {
     let cow: Cow<'_, str> = Cow::Borrowed(input);
 
     {

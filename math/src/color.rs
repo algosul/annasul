@@ -1,7 +1,7 @@
 use std::ops::Range;
 
 use algosul_derive::get;
-use num_traits::{float::FloatCore, Bounded, Euclid, Num, One};
+use num_traits::{Bounded, Euclid, Num, One, float::FloatCore};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -10,8 +10,7 @@ use crate::num::{NumLerp, NumNormalizeAngle, NumPercent, NumsRemap};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum Color<T: Clone>
-{
+pub enum Color<T: Clone> {
   G(ColorG<T>),
   Ga(ColorGa<T>),
   Bgr(ColorBgr<T>),
@@ -23,36 +22,30 @@ pub enum Color<T: Clone>
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Error)]
-pub enum ColorCastError
-{
+pub enum ColorCastError {
   #[error("{0} is not a integer")]
   NotAInteger(&'static str),
 }
 
 pub type ColorCastResult<T> = Result<T, ColorCastError>;
 
-pub trait ColorGrayIndex<T: Clone>
-{
+pub trait ColorGrayIndex<T: Clone> {
   fn gray(&self) -> T;
 }
-pub trait ColorRgbIndex<T: Clone>
-{
+pub trait ColorRgbIndex<T: Clone> {
   fn r(&self) -> T;
   fn g(&self) -> T;
   fn b(&self) -> T;
 }
-pub trait ColorHsvIndex<T: Clone>
-{
+pub trait ColorHsvIndex<T: Clone> {
   fn h(&self) -> T;
   fn s(&self) -> T;
   fn v(&self) -> T;
 }
-pub trait ColorAlphaIndex<T: Clone>
-{
+pub trait ColorAlphaIndex<T: Clone> {
   fn a(&self) -> T;
 }
-pub trait ColorRemap<N>
-{
+pub trait ColorRemap<N> {
   type Output<U: FloatCore + NumLerp<U> + From<N>>;
   type Result<U: FloatCore + NumLerp<U> + TryFrom<N>>;
   fn remap<U: FloatCore + NumLerp<U> + From<N>>(
@@ -87,8 +80,7 @@ pub trait ColorRemap<N>
 /// `0.0..=1.0`
 pub fn hsv_to_rgb<T: FloatCore + NumNormalizeAngle + From<u8>>(
   [h, s, v]: [T; 3],
-) -> ColorCastResult<[T; 3]>
-{
+) -> ColorCastResult<[T; 3]> {
   let h = h.normalize_unit(); // h: 0.0..1.0
   let c = v * s;
   let h_prime = h * <T as From<u8>>::from(6); // h: 0.0..6.0
@@ -97,32 +89,19 @@ pub fn hsv_to_rgb<T: FloatCore + NumNormalizeAngle + From<u8>>(
       - ((h_prime % <T as From<u8>>::from(2)) - <T as From<u8>>::from(1))
         .abs());
   let h_prime = h_prime.floor(); // h: 0..6
-  let (r1, g1, b1) = if <T as From<u8>>::from(0) == h_prime
-  {
+  let (r1, g1, b1) = if <T as From<u8>>::from(0) == h_prime {
     (c, x, <T as From<u8>>::from(0))
-  }
-  else if <T as From<u8>>::from(1) == h_prime
-  {
+  } else if <T as From<u8>>::from(1) == h_prime {
     (x, c, <T as From<u8>>::from(0))
-  }
-  else if <T as From<u8>>::from(2) == h_prime
-  {
+  } else if <T as From<u8>>::from(2) == h_prime {
     (<T as From<u8>>::from(0), c, x)
-  }
-  else if <T as From<u8>>::from(3) == h_prime
-  {
+  } else if <T as From<u8>>::from(3) == h_prime {
     (<T as From<u8>>::from(0), x, c)
-  }
-  else if <T as From<u8>>::from(4) == h_prime
-  {
+  } else if <T as From<u8>>::from(4) == h_prime {
     (x, <T as From<u8>>::from(0), c)
-  }
-  else if <T as From<u8>>::from(5) == h_prime
-  {
+  } else if <T as From<u8>>::from(5) == h_prime {
     (c, <T as From<u8>>::from(0), x)
-  }
-  else
-  {
+  } else {
     return Err(ColorCastError::NotAInteger(stringify!((v * s * 6).floor())));
   };
   let m = v - c;
@@ -132,37 +111,25 @@ pub fn hsv_to_rgb<T: FloatCore + NumNormalizeAngle + From<u8>>(
 /// `0.0..=1.0`
 pub fn rgb_to_hsv<T: FloatCore + NumNormalizeAngle + From<u8> + Euclid>(
   [r, g, b]: [T; 3],
-) -> ColorCastResult<[T; 3]>
-{
+) -> ColorCastResult<[T; 3]> {
   let max = r.max(g).max(b);
   let min = r.min(g).min(b);
   let delta = max - min;
-  let h = if delta == <T as From<u8>>::from(0)
-  {
+  let h = if delta == <T as From<u8>>::from(0) {
     <T as From<u8>>::from(0)
-  }
-  else
-  {
-    let h = if max == r
-    {
+  } else {
+    let h = if max == r {
       ((g - b) / delta).rem_euclid(&<T as From<u8>>::from(6))
-    }
-    else if max == g
-    {
+    } else if max == g {
       (b - r) / delta + <T as From<u8>>::from(2)
-    }
-    else
-    {
+    } else {
       (r - g) / delta + <T as From<u8>>::from(4)
     };
     (h / <T as From<u8>>::from(6)).normalize_unit()
   };
-  let s = if max == <T as From<u8>>::from(0)
-  {
+  let s = if max == <T as From<u8>>::from(0) {
     <T as From<u8>>::from(0)
-  }
-  else
-  {
+  } else {
     delta / max
   };
   Ok([h, s, max])
@@ -295,93 +262,68 @@ impl_color!(
     |ColorHsv::<T>([ref h, ref s, ref v])|
       [h.clone(), s.clone(), v.clone(), T::one()],;
 );
-impl<T: FloatCore + From<u8>> ColorHsv<T>
-{
-  pub fn to_rgb(&self) -> ColorCastResult<ColorRgb<T>>
-  {
+impl<T: FloatCore + From<u8>> ColorHsv<T> {
+  pub fn to_rgb(&self) -> ColorCastResult<ColorRgb<T>> {
     hsv_to_rgb(self.0).map(ColorRgb)
   }
 }
-impl<T: FloatCore + From<u8>> ColorHsva<T>
-{
-  pub fn to_rgba(&self) -> ColorCastResult<ColorRgba<T>>
-  {
+impl<T: FloatCore + From<u8>> ColorHsva<T> {
+  pub fn to_rgba(&self) -> ColorCastResult<ColorRgba<T>> {
     hsv_to_rgb(get!(self.hsv)).map(ColorRgb).map(Into::into)
   }
 }
-impl<T: FloatCore + Euclid + From<u8>> ColorRgb<T>
-{
-  pub fn to_hsv(&self) -> ColorCastResult<ColorHsv<T>>
-  {
+impl<T: FloatCore + Euclid + From<u8>> ColorRgb<T> {
+  pub fn to_hsv(&self) -> ColorCastResult<ColorHsv<T>> {
     rgb_to_hsv(self.0).map(ColorHsv)
   }
 }
-impl<T: FloatCore + Euclid + From<u8>> ColorRgba<T>
-{
-  pub fn to_hsva(&self) -> ColorCastResult<ColorHsva<T>>
-  {
+impl<T: FloatCore + Euclid + From<u8>> ColorRgba<T> {
+  pub fn to_hsva(&self) -> ColorCastResult<ColorHsva<T>> {
     rgb_to_hsv(get!(self.rgb)).map(ColorHsv).map(Into::into)
   }
 }
 
-impl<T: FloatCore + From<u8>> TryFrom<ColorHsv<T>> for ColorRgb<T>
-{
+impl<T: FloatCore + From<u8>> TryFrom<ColorHsv<T>> for ColorRgb<T> {
   type Error = ColorCastError;
 
-  fn try_from(value: ColorHsv<T>) -> ColorCastResult<Self>
-  {
+  fn try_from(value: ColorHsv<T>) -> ColorCastResult<Self> {
     value.to_rgb()
   }
 }
-impl<T: FloatCore + From<u8>> TryFrom<ColorHsva<T>> for ColorRgba<T>
-{
+impl<T: FloatCore + From<u8>> TryFrom<ColorHsva<T>> for ColorRgba<T> {
   type Error = ColorCastError;
 
-  fn try_from(value: ColorHsva<T>) -> ColorCastResult<Self>
-  {
+  fn try_from(value: ColorHsva<T>) -> ColorCastResult<Self> {
     value.to_rgba()
   }
 }
-impl<T: FloatCore + Euclid + From<u8>> TryFrom<ColorRgba<T>> for ColorHsva<T>
-{
+impl<T: FloatCore + Euclid + From<u8>> TryFrom<ColorRgba<T>> for ColorHsva<T> {
   type Error = ColorCastError;
 
-  fn try_from(value: ColorRgba<T>) -> ColorCastResult<Self>
-  {
+  fn try_from(value: ColorRgba<T>) -> ColorCastResult<Self> {
     value.to_hsva()
   }
 }
-impl<T: FloatCore + Euclid + From<u8>> TryFrom<ColorRgb<T>> for ColorHsv<T>
-{
+impl<T: FloatCore + Euclid + From<u8>> TryFrom<ColorRgb<T>> for ColorHsv<T> {
   type Error = ColorCastError;
 
-  fn try_from(value: ColorRgb<T>) -> ColorCastResult<Self>
-  {
+  fn try_from(value: ColorRgb<T>) -> ColorCastResult<Self> {
     value.to_hsv()
   }
 }
 
 #[cfg(test)]
-mod tests
-{
+mod tests {
   use crate::color::{
-    Color,
-    ColorG,
-    ColorGa,
-    ColorHsv,
-    ColorHsva,
-    ColorRgb,
-    ColorRgba,
+    Color, ColorG, ColorGa, ColorHsv, ColorHsva, ColorRgb, ColorRgba,
   };
 
   #[test]
-  fn test_rgb_to_hsv_and_back()
-  {
+  fn test_rgb_to_hsv_and_back() {
     let rgb = ColorRgb([0.2f32, 0.4, 0.6]);
     let hsv = rgb.to_hsv().expect("RGB to HSV failed");
     let rgb2 = hsv.to_rgb().expect("HSV to RGB failed");
-    for (a, b) in rgb.0.iter().zip(rgb2.0.iter())
-    {
+    for (a, b) in rgb.0.iter().zip(rgb2.0.iter()) {
       assert!(
         (a - b).abs() < 1e-5,
         "RGB->HSV->RGB not lossless: {} vs {}",
@@ -392,13 +334,11 @@ mod tests
   }
 
   #[test]
-  fn test_hsv_to_rgb_and_back()
-  {
+  fn test_hsv_to_rgb_and_back() {
     let hsv = ColorHsv([0.6f32, 0.5, 0.8]);
     let rgb = hsv.to_rgb().expect("HSV to RGB failed");
     let hsv2 = rgb.to_hsv().expect("RGB to HSV failed");
-    for (a, b) in hsv.0.iter().zip(hsv2.0.iter())
-    {
+    for (a, b) in hsv.0.iter().zip(hsv2.0.iter()) {
       assert!(
         (a - b).abs() < 1e-5,
         "HSV->RGB->HSV not lossless: {} vs {}",
@@ -409,8 +349,7 @@ mod tests
   }
 
   #[test]
-  fn test_color_enum_variants()
-  {
+  fn test_color_enum_variants() {
     let g = Color::G(ColorG([0.5f32]));
     let ga = Color::Ga(ColorGa([0.5f32, 1.0]));
     let rgb = Color::Rgb(ColorRgb([0.1f32, 0.2, 0.3]));

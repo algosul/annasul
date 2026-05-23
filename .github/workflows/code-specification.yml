@@ -1,0 +1,40 @@
+name: Code Specification
+
+on:
+  push:
+    branches: [ "release" ]
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+    branches: [ "release" ]
+    paths-ignore:
+      - 'docs/**'
+
+jobs:
+  code-specification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install System Dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libwayland-dev pkg-config
+          version: 1.0
+
+      - name: Install Rust toolchains
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      - name: Check Formatting (rustfmt)
+        run: cargo fmt --all -- --check
+
+      - name: Lint (cargo-clippy)
+        run: cargo clippy --all-targets --all-features -- -D warnings

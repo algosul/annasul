@@ -1,6 +1,6 @@
 [package]
 name = "algosul-app"
-version = "0.0.1"
+version = "0.0.5"
 authors.workspace = true
 repository.workspace = true
 keywords.workspace = true
