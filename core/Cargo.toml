@@ -16,11 +16,6 @@ default = []
 rustdoc-args = ["-cfg", "docsrs"]
 
 [dependencies]
-proc-macro2 = { workspace = true, public = true }
-quote = { workspace = true, public = true }
-syn = { workspace = true, features = ["full"], public = true }
-unicode-xid = { workspace = true, public = true }
-glob = { workspace = true, public = true }
 tokio = { workspace = true, features = ["full"], public = true }
 bytes = { workspace = true, public = true }
 thiserror.workspace = true

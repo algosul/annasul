@@ -89,8 +89,6 @@ utils-tokio = ["utils", "dep:tokio", "dep:bytes"]
 
 langs = []
 
-no_std = ["algosul-core/no_std", "algosul-app/no_std", "algosul-math/no_std"]
-
 unstable = []
 
 [package.metadata.docs.rs]

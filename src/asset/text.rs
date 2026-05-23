@@ -111,5 +111,7 @@ impl std::error::Error for Error {
   }
 }
 impl From<strfmt::FmtError> for Error {
-  fn from(value: strfmt::FmtError) -> Self { Self::FormatError(value) }
+  fn from(value: strfmt::FmtError) -> Self {
+    Self::FormatError(value)
+  }
 }

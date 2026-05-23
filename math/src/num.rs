@@ -1,9 +1,8 @@
 use std::ops::Range;
 
-use num_traits::{float::FloatCore, Bounded, FloatConst, NumOps};
+use num_traits::{Bounded, FloatConst, NumOps, float::FloatCore};
 
-pub trait NumPercent<N = Self>
-{
+pub trait NumPercent<N = Self> {
   /// # Safety
   /// + `range.start != range.end`
   fn percent_in<U: NumOps + From<N> + Clone>(self, range: Range<U>) -> U;
@@ -13,13 +12,11 @@ pub trait NumPercent<N = Self>
     self, range: Range<U>,
   ) -> Result<U, U::Error>;
 }
-pub trait NumLerp<N: FloatCore = Self>
-{
+pub trait NumLerp<N: FloatCore = Self> {
   fn lerp_in(self, range: Range<N>) -> N;
   fn lerp(range: Range<N>, alpha: N) -> N;
 }
-pub trait NumNormalizeAngle<N = Self>
-{
+pub trait NumNormalizeAngle<N = Self> {
   /// # Iuput
   /// `-max..max`
   /// # Result
@@ -30,22 +27,24 @@ pub trait NumNormalizeAngle<N = Self>
   /// # Result
   /// `0..360`
   fn normalize_degrees(self) -> N
-  where N: From<u16>;
+  where
+    N: From<u16>;
   /// # Input
   /// `-2 * PI..2 * PI`
   /// # Result
   /// `0..2π`
   fn normalize_radians(self) -> N
-  where N: FloatConst;
+  where
+    N: FloatConst;
   /// # Iuput
   /// `-1..1`
   /// # Result
   /// `0..1`
   fn normalize_unit(self) -> N
-  where N: From<u8>;
+  where
+    N: From<u8>;
 }
-pub trait NumRemap<N = Self>
-{
+pub trait NumRemap<N = Self> {
   fn remap<U: FloatCore + NumLerp<U> + From<N>>(
     self, from: Range<U>, to: Range<U>,
   ) -> U;
@@ -73,8 +72,7 @@ pub trait NumRemap<N = Self>
     ))?
   }
 }
-pub trait NumsRemap<N, const L: usize>
-{
+pub trait NumsRemap<N, const L: usize> {
   fn remap<U: FloatCore + NumRemap<U> + From<N>>(
     self, from: Range<U>, to: Range<U>,
   ) -> [U; L];
@@ -102,73 +100,61 @@ pub trait NumsRemap<N, const L: usize>
     ))?
   }
 }
-impl<N: NumOps> NumPercent<N> for N
-{
-  fn percent_in<U: NumOps + From<N> + Clone>(self, range: Range<U>) -> U
-  {
+impl<N: NumOps> NumPercent<N> for N {
+  fn percent_in<U: NumOps + From<N> + Clone>(self, range: Range<U>) -> U {
     (<U as From<N>>::from(self) - range.start.clone())
       / (range.end - range.start)
   }
 
   fn try_percent_in<U: NumOps + TryFrom<N> + Clone>(
     self, range: Range<U>,
-  ) -> Result<U, U::Error>
-  {
+  ) -> Result<U, U::Error> {
     Ok(
       (<U as TryFrom<N>>::try_from(self)? - range.start.clone())
         / (range.end - range.start),
     )
   }
 }
-impl<N: FloatCore> NumLerp<N> for N
-{
-  fn lerp_in(self, range: Range<N>) -> N
-  {
+impl<N: FloatCore> NumLerp<N> for N {
+  fn lerp_in(self, range: Range<N>) -> N {
     Self::lerp(range, self)
   }
 
-  fn lerp(range: Range<N>, alpha: N) -> N
-  {
+  fn lerp(range: Range<N>, alpha: N) -> N {
     ((N::one() - alpha) * range.start) + (alpha * range.end)
   }
 }
-impl<N: NumOps + PartialOrd + Clone + From<u8>> NumNormalizeAngle<N> for N
-{
-  fn normalize_cyclic(self, max: N) -> N
-  {
+impl<N: NumOps + PartialOrd + Clone + From<u8>> NumNormalizeAngle<N> for N {
+  fn normalize_cyclic(self, max: N) -> N {
     let temp = self % max.clone();
     if temp < N::from(0) { temp + max } else { temp }
   }
 
   fn normalize_degrees(self) -> N
-  where N: From<u16>
+  where
+    N: From<u16>,
   {
     self.normalize_cyclic(<N as From<u16>>::from(360))
   }
 
   fn normalize_radians(self) -> N
-  where N: FloatConst
+  where
+    N: FloatConst,
   {
     self.normalize_cyclic(N::PI() + N::PI())
   }
 
-  fn normalize_unit(self) -> N
-  {
+  fn normalize_unit(self) -> N {
     self.normalize_cyclic(<N as From<_>>::from(1))
   }
 }
-impl<N: NumOps + NumPercent<N>> NumRemap<N> for N
-{
+impl<N: NumOps + NumPercent<N>> NumRemap<N> for N {
   fn remap<U: FloatCore + NumLerp<U> + From<N>>(
     self, from: Range<U>, to: Range<U>,
-  ) -> U
-  {
-    if from.start == from.end
-    {
+  ) -> U {
+    if from.start == from.end {
       to.start
-    }
-    else
-    {
+    } else {
       let percent = self.percent_in::<U>(from);
       percent.lerp_in(to)
     }
@@ -176,34 +162,25 @@ impl<N: NumOps + NumPercent<N>> NumRemap<N> for N
 
   fn try_remap<U: FloatCore + NumLerp<U> + TryFrom<N>>(
     self, from: Range<U>, to: Range<U>,
-  ) -> Result<U, U::Error>
-  {
-    Ok(
-      if from.start == from.end
-      {
-        to.start
-      }
-      else
-      {
-        let percent = self.try_percent_in::<U>(from)?;
-        percent.lerp_in(to)
-      },
-    )
+  ) -> Result<U, U::Error> {
+    Ok(if from.start == from.end {
+      to.start
+    } else {
+      let percent = self.try_percent_in::<U>(from)?;
+      percent.lerp_in(to)
+    })
   }
 }
-impl<N: NumOps, const L: usize> NumsRemap<N, L> for [N; L]
-{
+impl<N: NumOps, const L: usize> NumsRemap<N, L> for [N; L] {
   fn remap<U: FloatCore + NumRemap<U> + From<N>>(
     self, from: Range<U>, to: Range<U>,
-  ) -> [U; L]
-  {
+  ) -> [U; L] {
     self.map(|x| <U as From<N>>::from(x).remap(from.clone(), to.clone()))
   }
 
   fn try_remap<U: FloatCore + NumRemap<U> + TryFrom<N>>(
     self, from: Range<U>, to: Range<U>,
-  ) -> Result<[U; L], U::Error>
-  {
+  ) -> Result<[U; L], U::Error> {
     #[cfg(feature = "unstable")]
     {
       self.try_map(|x| x.try_remap(from.clone(), to.clone()))
@@ -213,8 +190,7 @@ impl<N: NumOps, const L: usize> NumsRemap<N, L> for [N; L]
       use std::mem::MaybeUninit;
       let mut out: [MaybeUninit<U>; L] =
         unsafe { MaybeUninit::uninit().assume_init() };
-      for (i, x) in self.into_iter().enumerate()
-      {
+      for (i, x) in self.into_iter().enumerate() {
         let val = x.try_remap(from.clone(), to.clone())?;
         out[i] = MaybeUninit::new(val);
       }

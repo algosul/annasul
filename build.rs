@@ -1,6 +1,6 @@
 use std::{env, path::Path};
 
-use algosul_core::codegen::{ident::StrExt, module::ModuleExt};
+use algosul_codegen::{ident::StrExt, module::ModuleExt};
 use glob::PatternError;
 use proc_macro2::{Ident, Span};
 use syn::{ItemMod, parse_quote};

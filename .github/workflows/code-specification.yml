@@ -2,21 +2,29 @@ name: Code Specification
 
 on:
   push:
+    branches: [ "release" ]
     paths-ignore:
       - 'docs/**'
   pull_request:
+    branches: [ "release" ]
     paths-ignore:
       - 'docs/**'
 
 jobs:
-  code-format:
+  code-specification:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Install System Dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libwayland-dev pkg-config
+          version: 1.0
+
       - name: Install Rust toolchains
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@nightly
         with:
           components: rustfmt, clippy
 

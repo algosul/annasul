@@ -46,7 +46,7 @@ impl<T: Hash, E> Hash for StatusObserver<T, E>
 }
 impl<T: PartialOrd, E> PartialOrd for StatusObserver<T, E>
 {
-  fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering>
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering>
   {
     self.inner.partial_cmp(&other.inner)
   }
