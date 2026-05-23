@@ -1,7 +1,7 @@
-classDef core fill:#828, stroke: #f8f, stroke-width:2px, color: #fff;
-classDef std fill:#228, stroke: #88f,stroke-width:2px, color: #fff;
 classDef interface fill:#822, stroke: #f88,stroke-width:2px,stroke-dasharray: 5 5, color: #fff;
-classDef crate fill:#882, stroke: #ff8,stroke-width:2px, color: #fff;
+classDef core fill:#828, stroke: #f8f, stroke-width:2px, color: #fff;
+classDef modules fill:#228, stroke: #88f,stroke-width:2px, color: #fff;
+classDef messages fill:#882, stroke: #ff8,stroke-width:2px, color: #fff;
 classDef tool fill:#282, stroke: #8f8,stroke-width:2px, color: #fff;
 classDef function fill:#288, stroke: #8ff,stroke-width:2px, color: #fff;
 classDef view fill:#852, stroke: #fb8,stroke-width:2px, color: #fff;

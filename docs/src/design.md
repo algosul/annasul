@@ -6,3 +6,7 @@ If you are not familiar with the project, please read the [Getting Started](./ge
 ## Design Goals
 
 Design a modular, ergonomic, and universal tool library
+
+## Architecture
+
+See [Architecture](./design/architecture.md)

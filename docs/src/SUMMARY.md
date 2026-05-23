@@ -53,4 +53,5 @@
   - [(Todo) IDE Plugins](./design/ide-plugins.md)
     - [IDEA (IntelliJ) Plugin](./design/ide-plugins/intellij.md)
     - [VSCode Plugin](./design/ide-plugins/vscode.md)
+  - [Architecture](./design/architecture.md)
 
