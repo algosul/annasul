@@ -1,6 +1,6 @@
 [package]
 name = "algosul-core"
-version = "0.0.5"
+version.workspace = true
 authors.workspace = true
 repository.workspace = true
 keywords.workspace = true
@@ -11,11 +11,13 @@ readme.workspace = true
 
 [features]
 default = []
+std = []
+unstable = []
+serde = ["dep:serde"]
 
 [package.metadata.docs.rs]
 rustdoc-args = ["-cfg", "docsrs"]
 
 [dependencies]
-tokio = { workspace = true, features = ["full"], public = true }
-bytes = { workspace = true, public = true }
+serde = { workspace = true, optional = true }
 thiserror.workspace = true

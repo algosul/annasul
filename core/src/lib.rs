@@ -1,4 +1,2 @@
-pub mod fs;
-pub mod macros;
-pub mod process;
-pub mod utils;
+#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(feature = "unstable", warn("TODO"))]
