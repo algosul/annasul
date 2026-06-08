@@ -10,3 +10,13 @@ Design a modular, ergonomic, and universal tool library
 ## Architecture
 
 See [Architecture](./design/architecture.md)
+
+## Task System
+
+See [Task System](./design/task.md)
+
+## I18n
+
+### Backends
+
++ `fluent-rs`: <https://projectfluent.org/>

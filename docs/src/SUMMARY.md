@@ -3,6 +3,7 @@
 - [Introduction](./introduction.md)
 - [(Todo) Getting Started](./getting-started.md)
 - [Design Documentation](./design.md)
+  - [Task System](./design/task.md)
   - [Commands](./design/commands.md)
   - [Modules](./design/modules.md)
   - [Messages](./design/messages.md)
