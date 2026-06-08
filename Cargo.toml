@@ -12,7 +12,7 @@ description = "Some user-friendly yet personalized tools"
 readme = "README.md"
 
 [workspace.dependencies]
-algosul-core = { path = "core", default-features = false }
+algosul-core = { version = "0.0.6", path = "core", default-features = false }
 image = "0.25.6"
 strfmt = "0.2.5"
 env_logger = "0.11.8"
