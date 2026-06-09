@@ -1,7 +1,8 @@
 [workspace]
 resolver = "3"
-members = [".", "codegen", "app", "core", "derive", "math"]
+members = [".", "core"]
 [workspace.package]
+version = "0.0.7"
 authors = ["algosul <hxb.air@gmail.com>"]
 repository = "https://github.com/algosul/algosul-rs"
 keywords = ["algosul"]
@@ -11,16 +12,10 @@ description = "Some user-friendly yet personalized tools"
 readme = "README.md"
 
 [workspace.dependencies]
-algosul-app.path = "app"
-algosul-derive.path = "derive"
-algosul-core.path = "core"
-algosul-math.path = "math"
-algosul-codegen.path = "codegen"
+algosul-core = { version = "0.0.7", path = "core", default-features = false }
 image = "0.25.6"
-sys-locale = "0.3.2"
 strfmt = "0.2.5"
 env_logger = "0.11.8"
-reqwest = "0.13.3"
 log = "0.4.27"
 toml = "1.1.2"
 serde = "1.0.219"
@@ -35,14 +30,13 @@ strum = "0.28.0"
 glob = "0.3.3"
 proc-macro2 = "1.0.101"
 syn = "2.0.106"
-quote = "1.0.40"
-num = "0.4.3"
-num-traits = "0.2.19"
-unicode-xid = "0.2.6"
+fluent = "0.17.0"
+unic-langid = "0.9.6"
+unic-langid-impl = "0.9.6"
 
 [package]
 name = "algosul"
-version = "0.0.5"
+version.workspace = true
 authors.workspace = true
 repository.workspace = true
 keywords.workspace = true
@@ -55,79 +49,22 @@ autotests = false
 autobins = false
 autobenches = false
 autoexamples = false
+exclude = ["/docs/"]
 
 [lib]
 name = "algosul"
-crate-type = ["rlib"]
-
-[[test]]
-name = "asset"
-path = "tests/asset.rs"
-required-features = ["asset-image", "asset-text", "rayon"]
 
 [features]
-default = ["app-apps", "asset"]
-
-serde = ["algosul-app/serde", "algosul-math/serde"]
-
-derive = ["dep:algosul-derive"]
-
-app = ["dep:algosul-app"]
-app-apps = ["algosul-app/apps"]
-
-asset = ["dep:toml"]
-asset-text = ["asset", "dep:strfmt", "dep:itertools"]
-asset-image = ["asset", "dep:image"]
-
-math = ["dep:algosul-math"]
-math-color = ["math", "algosul-math/color"]
-
-process = []
-
-utils = ["dep:rfd"]
-utils-tokio = ["utils", "dep:tokio", "dep:bytes"]
-
-langs = []
-
-unstable = []
+default = []
+std = ["algosul-core/std"]
+unstable = ["algosul-core/unstable"]
+serde = ["algosul-core/serde"]
 
 [package.metadata.docs.rs]
 rustdoc-args = ["-cfg", "docsrs"]
 
 [dependencies]
-algosul-app = { workspace = true, optional = true, public = true }
-algosul-derive = { workspace = true, optional = true, features = [] }
-algosul-core = { workspace = true, features = [], public = true }
-algosul-math = { workspace = true, features = [
-], optional = true, public = true }
-
-image = { workspace = true, features = ["serde"], optional = true }
-sys-locale = { workspace = true, optional = true }
-strfmt = { workspace = true, optional = true, public = true }
-env_logger = { workspace = true }
-reqwest = { workspace = true, features = ["blocking"], optional = true }
-log = { workspace = true, features = ["serde", "kv_serde"] }
-toml = { workspace = true, optional = true }
-serde = { workspace = true, features = ["derive"] }
-bytes = { workspace = true, features = ["serde"], optional = true }
-tokio = { workspace = true, features = [
-    "process",
-    "io-util",
-    "rt",
-    "macros",
-    "rt-multi-thread",
-], optional = true }
-rayon = { workspace = true, features = [], optional = true }
-itertools = { workspace = true, features = [], optional = true }
-regex = { workspace = true, features = [], optional = true }
-thiserror = { workspace = true, features = [], optional = true }
-rfd = { workspace = true, optional = true }
-strum = { workspace = true, features = ["derive"] }
+algosul-core = { workspace = true }
 
 [build-dependencies]
-algosul-codegen = { workspace = true }
-proc-macro2 = { workspace = true }
-syn = { workspace = true, features = ["full"] }
-log = { workspace = true, features = [] }
 env_logger = { workspace = true, features = [] }
-glob = { workspace = true, features = [] }
