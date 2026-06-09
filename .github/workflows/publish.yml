@@ -12,6 +12,9 @@ jobs:
         uses: actions/checkout@v6
       - name: Install Rust toolchains
         uses: dtolnay/rust-toolchain@nightly
-        
-      - name: Publish to crates.io
-        run: cargo publish --token ${{ secrets.CARGO_PUBLISH_API_TOKEN }}
+
+      - name: Publish `algosul` to crates.io
+        run: cargo publish --token ${{ secrets.CARGO_PUBLISH_API_TOKEN }} --manifest-path=Cargo.toml
+
+      - name: Publish `algosul-core` to crates.io
+        run: cargo publish --token ${{ secrets.CARGO_PUBLISH_API_TOKEN }} --manifest-path=core/Cargo.toml

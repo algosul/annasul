@@ -15,9 +15,15 @@ std = []
 unstable = []
 serde = ["dep:serde"]
 
+i18n = ["dep:unic-langid", "dep:unic-langid-impl"]
+i18n-fluent = ["i18n", "dep:fluent"]
+
 [package.metadata.docs.rs]
 rustdoc-args = ["-cfg", "docsrs"]
 
 [dependencies]
 serde = { workspace = true, optional = true }
 thiserror.workspace = true
+fluent = { workspace = true, public = true, optional = true }
+unic-langid = { workspace = true, public = true, optional = true }
+unic-langid-impl = { workspace = true, public = true, optional = true }
