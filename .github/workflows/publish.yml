@@ -7,14 +7,16 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: publish
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
       - name: Install Rust toolchains
         uses: dtolnay/rust-toolchain@nightly
 
-      - name: Publish `algosul` to crates.io
-        run: cargo publish --token ${{ secrets.CARGO_PUBLISH_API_TOKEN }} --manifest-path=Cargo.toml
-
-      - name: Publish `algosul-core` to crates.io
-        run: cargo publish --token ${{ secrets.CARGO_PUBLISH_API_TOKEN }} --manifest-path=core/Cargo.toml
+      - name: Publish to crates.io
+        env:
+          CARGO_TOKEN: ${{ secrets.CARGO_PUBLISH_API_TOKEN }}
+        run: |
+          cargo publish --token "$CARGO_TOKEN" --manifest-path=core/Cargo.toml
+          cargo publish --token "$CARGO_TOKEN" --manifest-path=Cargo.toml
