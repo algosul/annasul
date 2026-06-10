@@ -3,3 +3,9 @@ extern crate alloc;
 
 #[cfg(feature = "i18n")]
 pub mod i18n;
+
+#[cfg(feature = "module")]
+pub mod module;
+
+#[cfg(feature = "message")]
+pub mod message;

@@ -33,6 +33,7 @@ syn = "2.0.106"
 fluent = "0.17.0"
 unic-langid = "0.9.6"
 unic-langid-impl = "0.9.6"
+uuid = "1.23.1"
 
 [package]
 name = "algosul"
