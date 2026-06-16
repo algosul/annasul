@@ -18,7 +18,7 @@ serde = ["dep:serde"]
 i18n = ["dep:unic-langid", "dep:unic-langid-impl"]
 i18n-fluent = ["i18n", "dep:fluent"]
 
-module = ["std", "dep:uuid"]
+module = ["std"]
 
 message = ["module"]
 
