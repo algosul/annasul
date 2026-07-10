@@ -19,7 +19,7 @@ i18n = ["dep:unic-langid", "dep:unic-langid-impl"]
 i18n-fluent = ["i18n", "dep:fluent"]
 
 util = []
-util-async = []
+util-async = ["util"]
 
 module = ["std"]
 
