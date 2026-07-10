@@ -2,7 +2,7 @@
 resolver = "3"
 members = [".", "ai", "core"]
 [workspace.package]
-version = "0.0.7"
+version = "0.0.8"
 authors = ["algosul <hxb.air@gmail.com>"]
 repository = "https://github.com/algosul/algosul-rs"
 keywords = ["algosul"]
