@@ -19,4 +19,5 @@ jobs:
           CARGO_TOKEN: ${{ secrets.CARGO_PUBLISH_API_TOKEN }}
         run: |
           cargo publish --token "$CARGO_TOKEN" --manifest-path=core/Cargo.toml
+          cargo publish --token "$CARGO_TOKEN" --manifest-path=ai/Cargo.toml
           cargo publish --token "$CARGO_TOKEN" --manifest-path=Cargo.toml

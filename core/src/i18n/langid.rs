@@ -2,19 +2,23 @@ use core::{
   fmt::{Display, Formatter},
   str::FromStr,
 };
-
+use thiserror::Error;
 use unic_langid::{LanguageIdentifier as UNICLangID, LanguageIdentifierError};
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum Error
 {
+  #[error("Unknown")]
   Unknown,
-  ParserError(ParserError),
+  #[error("Parser Error: {0}")]
+  ParserError(#[source] ParserError),
 }
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum ParserError
 {
+  #[error("Invalid Language")]
   InvalidLanguage,
+  #[error("Invalid Subtag")]
   InvalidSubtag,
 }
 

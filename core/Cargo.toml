@@ -11,12 +11,19 @@ readme.workspace = true
 
 [features]
 default = []
-std = []
+std = ["serde/std", "thiserror/std", "uuid/std"]
 unstable = []
 serde = ["dep:serde"]
 
 i18n = ["dep:unic-langid", "dep:unic-langid-impl"]
 i18n-fluent = ["i18n", "dep:fluent"]
+
+util = []
+util-async = []
+
+module = ["std"]
+
+message = ["module"]
 
 [package.metadata.docs.rs]
 rustdoc-args = ["-cfg", "docsrs"]
@@ -27,3 +34,4 @@ thiserror.workspace = true
 fluent = { workspace = true, public = true, optional = true }
 unic-langid = { workspace = true, public = true, optional = true }
 unic-langid-impl = { workspace = true, public = true, optional = true }
+uuid = { workspace = true, optional = true }
