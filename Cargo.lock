@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "algosul"
-version = "0.0.14"
+version = "0.0.15"
 dependencies = [
  "algosul-core",
  "env_logger",
@@ -21,11 +21,11 @@ dependencies = [
 
 [[package]]
 name = "algosul-ai"
-version = "0.0.14"
+version = "0.0.15"
 
 [[package]]
 name = "algosul-core"
-version = "0.0.14"
+version = "0.0.15"
 dependencies = [
  "fluent",
  "serde",
