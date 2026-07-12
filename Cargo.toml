@@ -2,7 +2,7 @@
 resolver = "3"
 members = [".", "ai", "core"]
 [workspace.package]
-version = "0.0.15"
+version = "0.0.16"
 authors = ["algosul <hxb.air@gmail.com>"]
 repository = "https://github.com/algosul/algosul-rs"
 keywords = ["algosul"]
@@ -12,7 +12,7 @@ description = "Some user-friendly yet personalized tools"
 readme = "README.md"
 
 [workspace.dependencies]
-algosul-core = { version = "0.0.15", path = "core", default-features = false }
+algosul-core = { version = "0.0.16", path = "core", default-features = false }
 image = "0.25.6"
 strfmt = "0.2.5"
 env_logger = "0.11.8"

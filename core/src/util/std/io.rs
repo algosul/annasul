@@ -1,4 +1,7 @@
-use std::io::{BufRead, Read, Result, Write};
+use std::{
+  io::{BufRead, Error, ErrorKind, Read, Result, Write},
+  ops::ControlFlow,
+};
 
 use crate::wrapper::{Wrapper, WrapperOwned};
 
@@ -40,8 +43,7 @@ pub trait LineReadExt: BufRead
   /// assert_eq!("hi\n", input);
   /// ```
   fn line_reader(self) -> LineReader<Self, ()>
-  where
-    Self: Sized,
+  where Self: Sized
   {
     LineReader::<_, ()>::new(self)
   }
@@ -58,8 +60,7 @@ pub trait LineReadExt: BufRead
   /// assert_eq!("hi\n", input);
   /// ```
   fn line_reader_with<F: FnMut()>(self, pre_read: F) -> LineReader<Self, F>
-  where
-    Self: Sized,
+  where Self: Sized
   {
     LineReader::<_, F>::new_with(self, pre_read)
   }
@@ -117,8 +118,7 @@ pub trait PromptWriteExt: Write
   /// # assert_eq!(read, format!("{now}> "));
   /// ```
   fn prompt_writer<P: AsRef<[u8]>>(self, prompt: P) -> PromptWriter<Self, P>
-  where
-    Self: Sized,
+  where Self: Sized
   {
     PromptWriter::<_, P>::new(self, prompt)
   }
@@ -146,10 +146,26 @@ pub trait PromptWriteExt: Write
   fn prompt_writer_with<P: AsRef<[u8]>, F: FnMut() -> P>(
     self, prompt: F,
   ) -> PromptFnWriter<Self, F>
-  where
-    Self: Sized,
+  where Self: Sized
   {
     PromptFnWriter::<_, F>::new(self, prompt)
+  }
+}
+
+fn control_read_until_valid<F>(
+  result: Result<()>, on_invalid_data: &mut F,
+) -> ControlFlow<Result<()>>
+where F: FnMut(Error)
+{
+  match result
+  {
+    Err(err) if err.kind() == ErrorKind::InvalidData =>
+    {
+      on_invalid_data(err);
+      ControlFlow::Continue(())
+    }
+    Err(err) => ControlFlow::Break(Err(err)),
+    Ok(()) => ControlFlow::Break(Ok(())),
   }
 }
 
@@ -159,11 +175,47 @@ pub trait LineRead
   /// see [`LineReadExt`]
   fn read_line(&mut self, buffer: &mut String) -> Result<()>;
 
+  /// read line until valid
+  /// see [`LineReadExt`]
+  fn read_line_until_valid<F>(
+    &mut self, buffer: &mut String, mut on_invalid_data: F,
+  ) -> Result<()>
+  where F: FnMut(Error)
+  {
+    let on_invalid_data = &mut on_invalid_data;
+    std::iter::repeat_with(move || self.read_line(buffer))
+      .try_for_each(move |result| {
+        control_read_until_valid(result, on_invalid_data)
+      })
+      .break_value()
+      .unwrap()
+  }
+
   /// write prompt and read line
   /// see [`LineReadExt`]
   fn read_line_with_prompt<W: PromptWrite>(
     &mut self, buffer: &mut String, prompt_writer: &mut W,
   ) -> Result<()>;
+
+  /// write prompt and read line until valid
+  /// see [`LineReadExt`]
+  fn read_line_until_valid_with_prompt<W: PromptWrite, F>(
+    &mut self, buffer: &mut String, prompt_writer: &mut W,
+    mut on_invalid_data: F,
+  ) -> Result<()>
+  where
+    F: FnMut(Error),
+  {
+    let on_invalid_data = &mut on_invalid_data;
+    std::iter::repeat_with(move || {
+      self.read_line_with_prompt(buffer, prompt_writer)
+    })
+    .try_for_each(move |result| {
+      control_read_until_valid(result, on_invalid_data)
+    })
+    .break_value()
+    .unwrap()
+  }
 }
 
 pub trait PromptWrite
@@ -182,7 +234,7 @@ pub trait PromptWrite
 pub struct PromptWriter<W: ?Sized, P: AsRef<[u8]>>
 {
   prompt: P,
-  inner: W,
+  inner:  W,
 }
 
 /// see [`PromptWriteExt`]
@@ -190,7 +242,7 @@ pub struct PromptWriter<W: ?Sized, P: AsRef<[u8]>>
 pub struct PromptFnWriter<W: ?Sized, P>
 {
   prompt_fn: P,
-  inner: W,
+  inner:     W,
 }
 
 /// see [`LineReadExt`]
@@ -198,7 +250,7 @@ pub struct PromptFnWriter<W: ?Sized, P>
 pub struct LineReader<R: ?Sized, P>
 {
   pre_read: P,
-  inner: R,
+  inner:    R,
 }
 
 impl<R: BufRead> LineReadExt for R {}
@@ -209,8 +261,7 @@ impl<W: ?Sized, P: AsRef<[u8]>, F: FnMut() -> P> PromptFnWriter<W, F>
 {
   /// see [`PromptWriteExt::prompt_writer_with`]
   pub fn new(inner: W, prompt_fn: F) -> Self
-  where
-    W: Sized,
+  where W: Sized
   {
     Self { inner, prompt_fn }
   }
@@ -220,8 +271,7 @@ impl<W: ?Sized, P: AsRef<[u8]>> PromptWriter<W, P>
 {
   /// see [`PromptWriteExt::prompt_writer`]
   pub fn new(inner: W, prompt: P) -> Self
-  where
-    W: Sized,
+  where W: Sized
   {
     Self { inner, prompt }
   }
@@ -231,8 +281,7 @@ impl<R: ?Sized> LineReader<R, ()>
 {
   /// see [`LineReadExt::line_reader`]
   pub fn new(inner: R) -> Self
-  where
-    R: Sized,
+  where R: Sized
   {
     Self { inner, pre_read: () }
   }
@@ -242,15 +291,14 @@ impl<R: ?Sized, P: FnMut()> LineReader<R, P>
 {
   /// see [`LineReadExt::line_reader_with`]
   pub fn new_with(inner: R, pre_read: P) -> Self
-  where
-    R: Sized,
+  where R: Sized
   {
     Self { inner, pre_read }
   }
 }
 
 impl<W: ?Sized, P: AsRef<[u8]>, F: FnMut() -> P> Wrapper<W>
-for PromptFnWriter<W, F>
+  for PromptFnWriter<W, F>
 {
   fn inner(&self) -> &W
   {
@@ -264,7 +312,7 @@ for PromptFnWriter<W, F>
 }
 
 impl<W, P: AsRef<[u8]>, F: FnMut() -> P> WrapperOwned<W>
-for PromptFnWriter<W, F>
+  for PromptFnWriter<W, F>
 {
   fn into_inner(self) -> W
   {
@@ -309,8 +357,7 @@ impl<R: ?Sized, P> Wrapper<R> for LineReader<R, P>
 impl<R, P> WrapperOwned<R> for LineReader<R, P>
 {
   fn into_inner(self) -> R
-  where
-    R: Sized,
+  where R: Sized
   {
     self.inner
   }
@@ -330,7 +377,7 @@ impl<W: Write, P: AsRef<[u8]>> PromptWrite for PromptWriter<W, P>
 }
 
 impl<W: Write, P: AsRef<[u8]>, F: FnMut() -> P> PromptWrite
-for PromptFnWriter<W, F>
+  for PromptFnWriter<W, F>
 {
   fn write_prompt(&mut self) -> Result<()>
   {
@@ -386,7 +433,7 @@ impl<R: Read + Clone, P: Fn() + Clone> Clone for LineReader<R, P>
   fn clone(&self) -> Self
   {
     Self {
-      inner: self.inner.clone(),
+      inner:    self.inner.clone(),
       pre_read: self.pre_read.clone(),
     }
   }
