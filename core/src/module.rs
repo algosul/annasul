@@ -12,7 +12,13 @@ use std::collections::HashMap;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum Error {}
+pub enum Error
+{
+  #[error("Failed to new Module ID")]
+  FailedToNewModuleID,
+  #[error("Non-existent Module ID")]
+  NonExistentModuleID,
+}
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -20,7 +26,8 @@ pub type Result<T> = core::result::Result<T, Error>;
 #[cfg_attr(debug_assertions, derive(Debug))]
 pub struct ModuleManager
 {
-  modules: HashMap<ModuleID, Box<ModuleWrapper>>,
+  id:      ModuleID,
+  modules: HashMap<ModuleID, ModuleWrapper>,
 }
 
 /// Module ID
@@ -28,21 +35,89 @@ pub struct ModuleManager
 pub struct ModuleID(usize);
 
 /// Module Data
-pub trait Module
+pub trait Module: 'static
 {
   fn name(&self) -> &str;
 }
 
-struct ModuleWrapper
+pub struct ModuleWrapper
 {
-  inner: dyn Module,
+  inner: Box<dyn Module>,
+}
+
+impl ModuleID
+{
+  const MAX_MODULE_ID: usize = u32::MAX as usize;
+
+  fn first() -> Self
+  {
+    Self(0)
+  }
+
+  fn next(&mut self) -> Self
+  {
+    if self.0 == Self::MAX_MODULE_ID
+    {
+      panic!("Module ID exhausted");
+    }
+    let old = *self;
+    *self = Self(self.0 + 1);
+    old
+  }
+}
+
+impl ModuleWrapper
+{
+  fn new(inner: impl Module) -> Self
+  {
+    Self { inner: Box::new(inner) }
+  }
+}
+
+impl AsRef<dyn Module> for ModuleWrapper
+{
+  fn as_ref(&self) -> &dyn Module
+  {
+    self.inner.as_ref()
+  }
+}
+
+impl AsMut<dyn Module> for ModuleWrapper
+{
+  fn as_mut(&mut self) -> &mut dyn Module
+  {
+    self.inner.as_mut()
+  }
 }
 
 impl ModuleManager
 {
   pub fn new() -> Result<Self>
   {
-    Ok(Self { modules: HashMap::new() })
+    Ok(Self { id: ModuleID::first(), modules: HashMap::new() })
+  }
+
+  pub fn register_module(&mut self, module: impl Module) -> ModuleID
+  {
+    let id = self.id.next();
+    self.modules.insert(id, ModuleWrapper::new(module));
+    id
+  }
+
+  pub fn unregister_module(&mut self, module: ModuleID) -> Result<()>
+  {
+    let _ = self.modules.remove(&module).ok_or(Error::NonExistentModuleID)?;
+    Ok(())
+  }
+
+  pub fn get(&self, id: ModuleID) -> Option<&ModuleWrapper>
+  {
+    self.modules.get(&id)
+  }
+
+  pub fn get_mut(&mut self, id: ModuleID) -> Option<&mut ModuleWrapper>
+  {
+    self.modules.get_mut(&id)
   }
 }
 

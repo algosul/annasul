@@ -11,6 +11,7 @@ readme.workspace = true
 
 [features]
 default = []
+
 std = ["serde/std", "thiserror/std", "uuid/std"]
 unstable = []
 serde = ["dep:serde"]
@@ -20,6 +21,9 @@ i18n-fluent = ["i18n", "dep:fluent"]
 
 util = []
 util-async = ["util"]
+util-std = ["util", "std", "wrapper"]
+
+wrapper = []
 
 module = ["std"]
 
