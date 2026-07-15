@@ -14,6 +14,8 @@ default = []
 
 std = ["serde/std", "thiserror/std", "uuid/std"]
 unstable = []
+unstable-full = ["unstable"]
+
 serde = ["dep:serde"]
 
 i18n = ["dep:unic-langid", "dep:unic-langid-impl"]

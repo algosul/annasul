@@ -1,0 +1,30 @@
+[package]
+name = "algosul-math"
+version.workspace = true
+authors.workspace = true
+repository.workspace = true
+keywords.workspace = true
+license-file.workspace = true
+edition.workspace = true
+description.workspace = true
+readme.workspace = true
+
+[features]
+default = []
+
+std = ["algosul-core/std"]
+std-unstable-vector = ["std", "unstable", "unstable-portable_simd", "algosul-core/wrapper"]
+std-unstable-color = ["std", "unstable", "unstable-portable_simd", "algosul-core/wrapper"]
+
+unstable = []
+unstable-full = [
+    "unstable",
+    "std-unstable-vector",
+    "unstable-portable_simd"
+]
+unstable-portable_simd = ["unstable"]
+
+serde = []
+
+[dependencies]
+algosul-core = { workspace = true, default-features = false, public = true }

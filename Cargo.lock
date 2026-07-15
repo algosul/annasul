@@ -16,6 +16,7 @@ name = "algosul"
 version = "0.0.17"
 dependencies = [
  "algosul-core",
+ "algosul-math",
  "env_logger",
 ]
 
@@ -42,6 +43,13 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "algosul-math"
+version = "0.0.17"
+dependencies = [
+ "algosul-core",
 ]
 
 [[package]]
