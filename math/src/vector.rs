@@ -1,4 +1,4 @@
-use std::simd::{Simd, SimdElement};
+use std::simd::{Simd, SimdElement, StdFloat, num::SimdFloat};
 
 use algosul_core::wrapper::{Wrapper, WrapperOwned};
 
@@ -66,13 +66,53 @@ where T: SimdElement
 }
 
 impl<T, const N: usize> WrapperOwned<Simd<T, N>> for Vector<T, N>
-where T: SimdElement
+where T: SimdElement + SimdFloat
 {
   fn into_inner(self) -> Simd<T, N>
   {
     self.inner
   }
 }
+
+macro_rules! impl_for_floats {
+  ($($ty:ty)+ $(,)?) => {
+    $(impl_for_float!($ty);)+
+  };
+}
+
+macro_rules! impl_for_float {
+  ($ty:ty) => {
+    impl<const N: usize> Vector<$ty, N>
+    {
+      /// vector norm (length)
+      pub fn norm(&self) -> $ty
+      {
+        self.norm_squared().sqrt()
+      }
+
+      /// Square of the vector norm (length)
+      pub fn norm_squared(&self) -> $ty
+      {
+        (Simd::<$ty, N>::splat(2.0) * self.inner.ln()).exp().reduce_sum()
+      }
+
+      /// vector norm (length)
+      /// see [Self::norm]
+      pub fn length(&self) -> $ty
+      {
+        self.norm()
+      }
+
+      /// Square of the vector norm (length)
+      /// see [Self::norm_squared]
+      pub fn length_squared(&self) -> $ty
+      {
+        self.norm_squared()
+      }
+    }
+  };
+}
+impl_for_floats!(f32 f64);
 
 crate::impl_element_getter! {
   Vector {
