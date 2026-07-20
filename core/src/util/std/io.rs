@@ -3,7 +3,7 @@ use std::{
   ops::ControlFlow,
 };
 
-use crate::wrapper::{Wrapper, WrapperOwned};
+use crate::wrapper::{Inner, InnerMut, IntoInner, Wrapper};
 
 /// line reader
 /// # Optional
@@ -297,22 +297,29 @@ impl<R: ?Sized, P: FnMut()> LineReader<R, P>
   }
 }
 
-impl<W: ?Sized, P: AsRef<[u8]>, F: FnMut() -> P> Wrapper<W>
-  for PromptFnWriter<W, F>
+impl<W: ?Sized, F> Wrapper for PromptFnWriter<W, F>
+{
+  type Inner = W;
+}
+
+impl<W: ?Sized, P: AsRef<[u8]>, F: FnMut() -> P> Inner for PromptFnWriter<W, F>
 {
   fn inner(&self) -> &W
   {
     &self.inner
   }
+}
 
+impl<W: ?Sized, P: AsRef<[u8]>, F: FnMut() -> P> InnerMut
+  for PromptFnWriter<W, F>
+{
   fn inner_mut(&mut self) -> &mut W
   {
     &mut self.inner
   }
 }
 
-impl<W, P: AsRef<[u8]>, F: FnMut() -> P> WrapperOwned<W>
-  for PromptFnWriter<W, F>
+impl<W, P: AsRef<[u8]>, F: FnMut() -> P> IntoInner for PromptFnWriter<W, F>
 {
   fn into_inner(self) -> W
   {
@@ -320,20 +327,28 @@ impl<W, P: AsRef<[u8]>, F: FnMut() -> P> WrapperOwned<W>
   }
 }
 
-impl<W: ?Sized, P: AsRef<[u8]>> Wrapper<W> for PromptWriter<W, P>
+impl<W: ?Sized, P: AsRef<[u8]>> Wrapper for PromptWriter<W, P>
+{
+  type Inner = W;
+}
+
+impl<W: ?Sized, P: AsRef<[u8]>> Inner for PromptWriter<W, P>
 {
   fn inner(&self) -> &W
   {
     &self.inner
   }
+}
 
+impl<W: ?Sized, P: AsRef<[u8]>> InnerMut for PromptWriter<W, P>
+{
   fn inner_mut(&mut self) -> &mut W
   {
     &mut self.inner
   }
 }
 
-impl<W, P: AsRef<[u8]>> WrapperOwned<W> for PromptWriter<W, P>
+impl<W, P: AsRef<[u8]>> IntoInner for PromptWriter<W, P>
 {
   fn into_inner(self) -> W
   {
@@ -341,20 +356,28 @@ impl<W, P: AsRef<[u8]>> WrapperOwned<W> for PromptWriter<W, P>
   }
 }
 
-impl<R: ?Sized, P> Wrapper<R> for LineReader<R, P>
+impl<R: ?Sized, P> Wrapper for LineReader<R, P>
+{
+  type Inner = R;
+}
+
+impl<R: ?Sized, P> Inner for LineReader<R, P>
 {
   fn inner(&self) -> &R
   {
     &self.inner
   }
+}
 
+impl<R: ?Sized, P> InnerMut for LineReader<R, P>
+{
   fn inner_mut(&mut self) -> &mut R
   {
     &mut self.inner
   }
 }
 
-impl<R, P> WrapperOwned<R> for LineReader<R, P>
+impl<R, P> IntoInner for LineReader<R, P>
 {
   fn into_inner(self) -> R
   where R: Sized
@@ -442,7 +465,7 @@ impl<R: Read + Clone, P: Fn() + Clone> Clone for LineReader<R, P>
 #[cfg(test)]
 mod tests
 {
-  use std::io::{pipe, stdout, BufReader, PipeReader};
+  use std::io::{BufReader, PipeReader, pipe, stdout};
 
   use super::*;
 

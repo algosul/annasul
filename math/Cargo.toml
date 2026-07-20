@@ -13,16 +13,36 @@ readme.workspace = true
 default = []
 
 std = ["algosul-core/std"]
-std-unstable-vector = ["std", "unstable", "unstable-portable_simd", "algosul-core/wrapper"]
-std-unstable-color = ["std", "unstable", "unstable-portable_simd", "algosul-core/wrapper"]
+std-unstable-matrix = [
+    "std",
+    "unstable",
+    "__feature-portable_simd",
+    "__feature-generic_const_args",
+    "algosul-core/wrapper"
+]
+std-unstable-vector = [
+    "std",
+    "unstable",
+    "__feature-portable_simd",
+    "algosul-core/wrapper"
+]
+std-unstable-color = [
+    "std",
+    "unstable",
+    "__feature-portable_simd",
+    "algosul-core/wrapper"
+]
 
 unstable = []
 unstable-full = [
     "unstable",
+    "std-unstable-matrix",
     "std-unstable-vector",
-    "unstable-portable_simd"
+    "std-unstable-color",
 ]
-unstable-portable_simd = ["unstable"]
+
+__feature-portable_simd = ["unstable"]
+__feature-generic_const_args = ["unstable"]
 
 serde = []
 

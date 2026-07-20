@@ -1,9 +1,33 @@
-pub trait Wrapper<I: ?Sized>
+pub mod prelude;
+
+pub trait Wrapper
 {
-  fn inner(&self) -> &I;
-  fn inner_mut(&mut self) -> &mut I;
+  type Inner: ?Sized;
 }
-pub trait WrapperOwned<I>: Wrapper<I>
+
+pub trait Inner: Wrapper
 {
-  fn into_inner(self) -> I;
+  fn inner(&self) -> &Self::Inner;
+}
+
+pub trait InnerMut: Inner
+{
+  fn inner_mut(&mut self) -> &mut Self::Inner;
+}
+
+pub trait IntoInner: Wrapper
+{
+  fn into_inner(self) -> Self::Inner;
+}
+
+pub trait FromInner: Wrapper
+{
+  fn from_inner(inner: Self::Inner) -> Self;
+}
+
+pub trait TryFromInner: Wrapper
+where Self: Sized
+{
+  type Error;
+  fn try_from_inner(inner: Self::Inner) -> Result<Self, Self::Error>;
 }

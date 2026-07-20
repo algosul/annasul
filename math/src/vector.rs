@@ -1,12 +1,12 @@
-use std::simd::{Simd, SimdElement, StdFloat, num::SimdFloat};
+use std::simd::{Simd, SimdElement, num::SimdFloat};
 
-use algosul_core::wrapper::{Wrapper, WrapperOwned};
+use algosul_core::wrapper::{FromInner, Inner, InnerMut, IntoInner, Wrapper};
 
 #[cfg(not(feature = "std"))]
 compile_error!("no feature 'std'");
 
-#[cfg(not(feature = "unstable-portable_simd"))]
-compile_error!("no feature 'unstable-portable_simd'");
+#[cfg(not(feature = "__feature-portable_simd"))]
+compile_error!("no feature '__feature-portable_simd'");
 
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Vector<T, const N: usize>
@@ -51,26 +51,61 @@ crate::type_defines! {
   }
 }
 
-impl<T, const N: usize> Wrapper<Simd<T, N>> for Vector<T, N>
+impl<T, const N: usize> Vector<T, N>
 where T: SimdElement
 {
-  fn inner(&self) -> &Simd<T, N>
+  #[inline]
+  pub fn from_array(array: [T; N]) -> Self
+  {
+    Self::from_inner(<Self as Wrapper>::Inner::from_array(array))
+  }
+
+  #[inline]
+  pub fn from_slice(slice: &[T]) -> Self
+  {
+    Self::from_inner(<Self as Wrapper>::Inner::from_slice(slice))
+  }
+}
+
+impl<T, const N: usize> Wrapper for Vector<T, N>
+where T: SimdElement
+{
+  type Inner = Simd<T, N>;
+}
+
+impl<T, const N: usize> Inner for Vector<T, N>
+where T: SimdElement
+{
+  fn inner(&self) -> &Self::Inner
   {
     &self.inner
   }
+}
 
-  fn inner_mut(&mut self) -> &mut Simd<T, N>
+impl<T, const N: usize> InnerMut for Vector<T, N>
+where T: SimdElement
+{
+  fn inner_mut(&mut self) -> &mut Self::Inner
   {
     &mut self.inner
   }
 }
 
-impl<T, const N: usize> WrapperOwned<Simd<T, N>> for Vector<T, N>
+impl<T, const N: usize> IntoInner for Vector<T, N>
 where T: SimdElement + SimdFloat
 {
-  fn into_inner(self) -> Simd<T, N>
+  fn into_inner(self) -> Self::Inner
   {
     self.inner
+  }
+}
+
+impl<T, const N: usize> FromInner for Vector<T, N>
+where T: SimdElement
+{
+  fn from_inner(inner: Self::Inner) -> Self
+  {
+    Self { inner }
   }
 }
 
@@ -93,7 +128,7 @@ macro_rules! impl_for_float {
       /// Square of the vector norm (length)
       pub fn norm_squared(&self) -> $ty
       {
-        (Simd::<$ty, N>::splat(2.0) * self.inner.ln()).exp().reduce_sum()
+        (self.inner * self.inner).reduce_sum()
       }
 
       /// vector norm (length)
@@ -120,5 +155,30 @@ crate::impl_element_getter! {
     y: 2,
     z: 3,
     w: 4,
+  }
+}
+
+#[cfg(test)]
+mod tests
+{
+  use super::*;
+  #[test]
+  fn test_norm()
+  {
+    let vec = VectorF32x2::from_array([1.0, 8.0]);
+    let norm_squared = vec.norm_squared();
+    let norm = vec.norm();
+    assert_eq!(norm * norm, norm_squared);
+    assert_eq!(norm_squared, 65.0);
+    let vec = VectorF32x3::from_array([3.0, 4.0, 5.0]);
+    let norm_squared = vec.norm_squared();
+    let norm = vec.norm();
+    assert_eq!(norm * norm, norm_squared);
+    assert_eq!(norm_squared, 50.0);
+    let vec = VectorF32x4::from_array([2.0, 3.0, 4.0, 5.0]);
+    let norm_squared = vec.norm_squared();
+    let norm = vec.norm();
+    assert_eq!(norm * norm, norm_squared);
+    assert_eq!(norm_squared, 54.0);
   }
 }

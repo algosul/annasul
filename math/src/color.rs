@@ -1,12 +1,12 @@
-use std::simd::{Simd, SimdElement};
+use std::simd::{Simd, SimdElement, num::SimdFloat};
 
-use algosul_core::wrapper::{Wrapper, WrapperOwned};
+use algosul_core::wrapper::{FromInner, Inner, InnerMut, IntoInner, Wrapper};
 
 #[cfg(not(feature = "std"))]
 compile_error!("no feature 'std'");
 
-#[cfg(not(feature = "unstable-portable_simd"))]
-compile_error!("no feature 'unstable-portable_simd'");
+#[cfg(not(feature = "__feature-portable_simd"))]
+compile_error!("no feature '__feature-portable_simd'");
 
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Color<T, const N: usize>
@@ -50,26 +50,61 @@ crate::type_defines! {
   }
 }
 
-impl<T, const N: usize> Wrapper<Simd<T, N>> for Color<T, N>
+impl<T, const N: usize> Color<T, N>
 where T: SimdElement
 {
-  fn inner(&self) -> &Simd<T, N>
+  #[inline]
+  pub fn from_array(array: [T; N]) -> Self
+  {
+    Self::from_inner(<Self as Wrapper>::Inner::from_array(array))
+  }
+
+  #[inline]
+  pub fn from_slice(slice: &[T]) -> Self
+  {
+    Self::from_inner(<Self as Wrapper>::Inner::from_slice(slice))
+  }
+}
+
+impl<T, const N: usize> Wrapper for Color<T, N>
+where T: SimdElement
+{
+  type Inner = Simd<T, N>;
+}
+
+impl<T, const N: usize> Inner for Color<T, N>
+where T: SimdElement
+{
+  fn inner(&self) -> &Self::Inner
   {
     &self.inner
   }
+}
 
-  fn inner_mut(&mut self) -> &mut Simd<T, N>
+impl<T, const N: usize> InnerMut for Color<T, N>
+where T: SimdElement
+{
+  fn inner_mut(&mut self) -> &mut Self::Inner
   {
     &mut self.inner
   }
 }
 
-impl<T, const N: usize> WrapperOwned<Simd<T, N>> for Color<T, N>
-where T: SimdElement
+impl<T, const N: usize> IntoInner for Color<T, N>
+where T: SimdElement + SimdFloat
 {
-  fn into_inner(self) -> Simd<T, N>
+  fn into_inner(self) -> Self::Inner
   {
     self.inner
+  }
+}
+
+impl<T, const N: usize> FromInner for Color<T, N>
+where T: SimdElement
+{
+  fn from_inner(inner: Self::Inner) -> Self
+  {
+    Self { inner }
   }
 }
 

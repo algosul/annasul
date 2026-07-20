@@ -16,7 +16,15 @@ proc-macro = true
 default = []
 std = []
 
+wrapper = ["algosul-core/wrapper"]
+
+[[test]]
+name = "wrapper"
+required-features = ["wrapper"]
+
 [dependencies]
+algosul-core = { workspace = true, public = true }
 proc-macro2.workspace = true
+proc-macro-warning.workspace = true
 quote.workspace = true
 syn.workspace = true

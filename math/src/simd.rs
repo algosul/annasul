@@ -1,9 +1,9 @@
 #[macro_export]
 macro_rules! type_defines {
-  ($ty:ident { $($(#[$meta:meta])? $name:ident($t:ty, $i:literal)),+ $(,)? } ) => {
+  ($ty:ident { $($(#[$meta:meta])? $name:ident($($t:ty),* $(, $($i:literal),*)? $(,)?)),+ $(,)? } ) => {
     $(
       $(#[$meta])?
-      pub type $name = $ty<$t, $i>;
+      pub type $name = $ty<$($t),* $(, $($i),*)?>;
     )+
   };
 }
