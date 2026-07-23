@@ -1,10 +1,5 @@
 use proc_macro::TokenStream;
-use quote::ToTokens;
-use syn::{
-  DeriveInput,
-  parse_macro_input,
-  spanned::Spanned,
-};
+use syn::{DeriveInput, parse_macro_input};
 
 #[cfg(feature = "wrapper")]
 mod wrapper;

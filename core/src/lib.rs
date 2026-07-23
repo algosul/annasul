@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(feature = "__feature-const_trait_impl", feature(const_trait_impl))]
 extern crate alloc;
 extern crate core;
 

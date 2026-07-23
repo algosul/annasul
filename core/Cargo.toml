@@ -16,6 +16,8 @@ std = ["serde/std", "thiserror/std", "uuid/std"]
 unstable = []
 unstable-full = ["unstable"]
 
+__feature-const_trait_impl = ["unstable"]
+
 serde = ["dep:serde"]
 
 i18n = ["dep:unic-langid", "dep:unic-langid-impl"]

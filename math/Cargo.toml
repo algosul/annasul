@@ -17,20 +17,30 @@ std-unstable-matrix = [
     "std",
     "unstable",
     "__feature-portable_simd",
-    "__feature-generic_const_args",
-    "algosul-core/wrapper"
+    "__feature-algosul-wrapper",
+    "__feature-const_trait_impl"
 ]
 std-unstable-vector = [
     "std",
     "unstable",
     "__feature-portable_simd",
-    "algosul-core/wrapper"
+    "__feature-algosul-wrapper",
+    "__feature-const_trait_impl"
 ]
 std-unstable-color = [
     "std",
     "unstable",
     "__feature-portable_simd",
-    "algosul-core/wrapper"
+    "__feature-algosul-wrapper",
+    "__feature-const_trait_impl"
+]
+std-unstable-shape = [
+    "std",
+    "unstable",
+    "std-unstable-vector",
+    "__feature-portable_simd",
+    "__feature-algosul-wrapper",
+    "__feature-const_trait_impl"
 ]
 
 unstable = []
@@ -39,12 +49,15 @@ unstable-full = [
     "std-unstable-matrix",
     "std-unstable-vector",
     "std-unstable-color",
+    "std-unstable-shape",
 ]
 
 __feature-portable_simd = ["unstable"]
-__feature-generic_const_args = ["unstable"]
+__feature-algosul-wrapper = ["unstable", "algosul-core/wrapper", "algosul-derive/wrapper", "algosul-derive/unstable"]
+__feature-const_trait_impl = ["unstable", "algosul-core/__feature-const_trait_impl"]
 
 serde = []
 
 [dependencies]
-algosul-core = { workspace = true, default-features = false, public = true }
+algosul-core = { workspace = true, public = true }
+algosul-derive = { workspace = true, public = true }

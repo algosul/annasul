@@ -1,6 +1,7 @@
-use std::simd::{Simd, SimdElement, num::SimdFloat};
+use std::simd::{Simd, SimdElement};
 
-use algosul_core::wrapper::{FromInner, Inner, InnerMut, IntoInner, Wrapper};
+use algosul_core::wrapper::prelude::*;
+use algosul_derive::Wrapper;
 
 #[cfg(not(feature = "std"))]
 compile_error!("no feature 'std'");
@@ -8,57 +9,79 @@ compile_error!("no feature 'std'");
 #[cfg(not(feature = "__feature-portable_simd"))]
 compile_error!("no feature '__feature-portable_simd'");
 
-#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Matrix<T, const LINE: usize, const COL: usize>
-where
-  T: SimdElement,
-  [(); const { LINE * COL }]:,
+#[cfg(not(feature = "__feature-algosul-wrapper"))]
+compile_error!("no feature '__feature-algosul-wrapper'");
+
+#[cfg(not(feature = "__feature-const_trait_impl"))]
+compile_error!("no feature '__feature-const_trait_impl'");
+
+/// # Params
+/// + `N`: must is `LINE * COL`.
+///   Why not calculate automatically?
+///   Calculating `LINE * COL` requires the `min_generics_const_param` feature
+///   from the Rust nightly release
+///   (https://github.com/rust-lang/rust/issues/132980).
+///   Some macros derive (e.g. `algosul-derive::Wrapper`) uses the crate `syn`.
+///   However, `syn` does not support `min_generics_const_param`.
+#[derive(
+  Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Wrapper,
+)]
+pub struct Matrix<T, const LINE: usize, const COL: usize, const N: usize>
+where T: SimdElement
 {
-  inner: Simd<T, const { LINE * COL }>,
+  #[wrapper(inner)]
+  inner: Simd<T, N>,
 }
 crate::type_defines! {
   Matrix {
-    MatrixI8x2x2(i8, 2, 2),
-    MatrixI8x3x3(i8, 3, 3),
-    MatrixI8x4x4(i8, 4, 4),
-    MatrixU8x2x2(u8, 2, 2),
-    MatrixU8x3x3(u8, 3, 3),
-    MatrixU8x4x4(u8, 4, 4),
-    MatrixI16x2x2(i16, 2, 2),
-    MatrixI16x3x3(i16, 3, 3),
-    MatrixI16x4x4(i16, 4, 4),
-    MatrixU16x2x2(u16, 2, 2),
-    MatrixU16x3x3(u16, 3, 3),
-    MatrixU16x4x4(u16, 4, 4),
-    MatrixI32x2x2(i32, 2, 2),
-    MatrixI32x3x3(i32, 3, 3),
-    MatrixI32x4x4(i32, 4, 4),
-    MatrixU32x2x2(u32, 2, 2),
-    MatrixU32x3x3(u32, 3, 3),
-    MatrixU32x4x4(u32, 4, 4),
-    MatrixI64x2x2(i64, 2, 2),
-    MatrixI64x3x3(i64, 3, 3),
-    MatrixI64x4x4(i64, 4, 4),
-    MatrixU64x2x2(u64, 2, 2),
-    MatrixU64x3x3(u64, 3, 3),
-    MatrixU64x4x4(u64, 4, 4),
-    MatrixF32x1x1(f32, 1, 1),
-    MatrixF32x2x2(f32, 2, 2),
-    MatrixF32x3x3(f32, 3, 3),
-    MatrixF32x4x4(f32, 4, 4),
-    MatrixF64x2x2(f64, 2, 2),
-    MatrixF64x3x3(f64, 3, 3),
-    MatrixF64x4x4(f64, 4, 4),
+    MatrixI8x2x2(i8, 2, 2, 4),
+    MatrixI8x3x3(i8, 3, 3, 9),
+    MatrixI8x4x4(i8, 4, 4, 16),
+
+    MatrixU8x2x2(u8, 2, 2, 4),
+    MatrixU8x3x3(u8, 3, 3, 9),
+    MatrixU8x4x4(u8, 4, 4, 16),
+
+    MatrixI16x2x2(i16, 2, 2, 4),
+    MatrixI16x3x3(i16, 3, 3, 9),
+    MatrixI16x4x4(i16, 4, 4, 16),
+
+    MatrixU16x2x2(u16, 2, 2, 4),
+    MatrixU16x3x3(u16, 3, 3, 9),
+    MatrixU16x4x4(u16, 4, 4, 16),
+
+    MatrixI32x2x2(i32, 2, 2, 4),
+    MatrixI32x3x3(i32, 3, 3, 9),
+    MatrixI32x4x4(i32, 4, 4, 16),
+
+    MatrixU32x2x2(u32, 2, 2, 4),
+    MatrixU32x3x3(u32, 3, 3, 9),
+    MatrixU32x4x4(u32, 4, 4, 16),
+
+    MatrixI64x2x2(i64, 2, 2, 4),
+    MatrixI64x3x3(i64, 3, 3, 9),
+    MatrixI64x4x4(i64, 4, 4, 16),
+
+    MatrixU64x2x2(u64, 2, 2, 4),
+    MatrixU64x3x3(u64, 3, 3, 9),
+    MatrixU64x4x4(u64, 4, 4, 16),
+
+    MatrixF32x2x2(f32, 2, 2, 4),
+    MatrixF32x3x3(f32, 3, 3, 9),
+    MatrixF32x4x4(f32, 4, 4, 16),
+
+    MatrixF64x2x2(f64, 2, 2, 4),
+    MatrixF64x3x3(f64, 3, 3, 9),
+    MatrixF64x4x4(f64, 4, 4, 16),
   }
 }
 
-impl<T, const LINE: usize, const COL: usize> Matrix<T, LINE, COL>
-where
-  T: SimdElement,
-  [(); const { LINE * COL }]:,
+impl<T, const LINE: usize, const COL: usize, const N: usize>
+  Matrix<T, LINE, COL, N>
+where T: SimdElement
 {
   #[inline]
-  pub fn from_array(array: [T; const { LINE * COL }]) -> Self
+  pub fn from_array(array: [T; N]) -> Self
   {
     Self::from_inner(<Self as Wrapper>::Inner::from_array(array))
   }
@@ -70,52 +93,11 @@ where
   }
 }
 
-impl<T, const LINE: usize, const COL: usize> Wrapper for Matrix<T, LINE, COL>
-where
-  T: SimdElement,
-  [(); const { LINE * COL }]:,
+impl<T, const LINE: usize, const COL: usize, const N: usize> FromInner
+  for Matrix<T, LINE, COL, N>
+where T: SimdElement
 {
-  type Inner = Simd<T, const { LINE * COL }>;
-}
-
-impl<T, const LINE: usize, const COL: usize> Inner for Matrix<T, LINE, COL>
-where
-  T: SimdElement,
-  [(); const { LINE * COL }]:,
-{
-  fn inner(&self) -> &Self::Inner
-  {
-    &self.inner
-  }
-}
-
-impl<T, const LINE: usize, const COL: usize> InnerMut for Matrix<T, LINE, COL>
-where
-  T: SimdElement,
-  [(); const { LINE * COL }]:,
-{
-  fn inner_mut(&mut self) -> &mut Self::Inner
-  {
-    &mut self.inner
-  }
-}
-
-impl<T, const LINE: usize, const COL: usize> IntoInner for Matrix<T, LINE, COL>
-where
-  T: SimdElement + SimdFloat,
-  [(); const { LINE * COL }]:,
-{
-  fn into_inner(self) -> Self::Inner
-  {
-    self.inner
-  }
-}
-
-impl<T, const LINE: usize, const COL: usize> FromInner for Matrix<T, LINE, COL>
-where
-  T: SimdElement,
-  [(); const { LINE * COL }]:,
-{
+  #[inline]
   fn from_inner(inner: Self::Inner) -> Self
   {
     Self { inner }

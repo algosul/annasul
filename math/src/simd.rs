@@ -10,16 +10,33 @@ macro_rules! type_defines {
 
 #[macro_export]
 macro_rules! impl_element_getter {
-  ($ty:ident { $($(#[$meta:meta])? $name:ident: $i:literal),+ $(,)? } ) => {
+  ($ty:ident { $($name:ident: $i:literal $($n:literal)+),+ $(,)? } ) => {
     $(
-      impl<T: SimdElement> $ty<T, $i>
+      $(impl<T: SimdElement> $ty<T, $n>
       {
-        $(#[$meta])?
         pub fn $name(&self) -> T
         {
-          self.inner[$i - 1]
+          self.inner[$i]
         }
-      }
+      })+
+    )+
+  };
+}
+
+#[macro_export]
+macro_rules! impl_channel_getter {
+  ($ty:ident { $($name:ident: $i:literal $($n:literal)+),+ $(,)? } ) => {
+    $(
+      $(impl<T, S> $ty<T, S, $n>
+        where
+          T: SimdElement,
+          S: ColorSpace<$n>,
+      {
+        pub fn $name(&self) -> T
+        {
+          self.inner[$i]
+        }
+      })+
     )+
   };
 }

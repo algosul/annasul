@@ -16,6 +16,7 @@ name = "algosul"
 version = "0.0.17"
 dependencies = [
  "algosul-core",
+ "algosul-derive",
  "algosul-math",
  "env_logger",
 ]
@@ -52,6 +53,7 @@ name = "algosul-math"
 version = "0.0.17"
 dependencies = [
  "algosul-core",
+ "algosul-derive",
 ]
 
 [[package]]

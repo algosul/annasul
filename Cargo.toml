@@ -14,6 +14,7 @@ readme = "README.md"
 [workspace.dependencies]
 algosul-core = { version = "0.0.17", path = "core", default-features = false }
 algosul-math = { version = "0.0.17", path = "math", default-features = false }
+algosul-derive = { version = "0.0.17", path = "derive", default-features = false }
 image = "0.25.6"
 strfmt = "0.2.5"
 env_logger = "0.11.8"
@@ -82,6 +83,7 @@ rustdoc-args = ["-cfg", "docsrs"]
 [dependencies]
 algosul-core = { workspace = true, public = true }
 algosul-math = { workspace = true, public = true }
+algosul-derive = { workspace = true, public = true }
 
 [build-dependencies]
 env_logger = { workspace = true, features = [] }

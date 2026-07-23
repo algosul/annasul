@@ -1,1 +1,1 @@
-pub use super::{FromInner, IntoInner, TryFromInner, Wrapper};
+pub use super::{FromInner, Inner, InnerMut, IntoInner, TryFromInner, Wrapper};
