@@ -1,6 +1,6 @@
 use std::simd::SimdElement;
 
-use crate::ops::Cross;
+use crate::traits::ops::Cross;
 use crate::vector::Vector;
 use algosul_core::wrapper::prelude::*;
 use algosul_derive::Wrapper;

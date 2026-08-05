@@ -1,5 +1,9 @@
+use algosul_core::wrapper::prelude::*;
+use algosul_derive::Wrapper;
+use num::{One, integer::Roots, traits::ConstOne};
+use num_traits::{ConstZero, MulAdd, MulAddAssign, Zero, real::Real};
+use std::ops::{AddAssign, DivAssign, MulAssign, RemAssign, SubAssign};
 use std::{
-  borrow::Borrow,
   ops::{Add, Div, Mul, Rem, Sub},
   simd::{
     Mask,
@@ -7,17 +11,21 @@ use std::{
     Simd,
     SimdElement,
     cmp::SimdPartialEq,
-    num::{SimdFloat, SimdInt, SimdUint},
     simd_swizzle,
   },
 };
 
-use algosul_core::wrapper::prelude::*;
-use algosul_derive::Wrapper;
-use num::{One, traits::ConstOne};
-use num_traits::{ConstZero, Zero};
-
-use crate::ops::{Cross, Dot};
+use crate::simd::{SimdMulAdd, SimdMulAddAssign};
+use crate::{
+  simd::SimdReduceSum,
+  traits::{
+    CheckedINorm,
+    INorm,
+    Norm,
+    NormSquared,
+    ops::{Cross, Dot},
+  },
+};
 
 #[cfg(not(feature = "std"))]
 compile_error!("no feature 'std'");
@@ -35,7 +43,8 @@ compile_error!("no feature '__feature-const_trait_impl'");
   Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Wrapper,
 )]
 pub struct Vector<T, const N: usize>
-where T: SimdElement
+where
+  T: SimdElement,
 {
   #[wrapper(inner)]
   inner: Simd<T, N>,
@@ -67,7 +76,12 @@ crate::type_defines! {
     VectorU64x2(u64, 2),
     VectorU64x3(u64, 3),
     VectorU64x4(u64, 4),
-    VectorF32x1(f32, 1),
+    #[cfg(feature = "unstable-f16")]
+    VectorF16x2(f16, 2),
+    #[cfg(feature = "unstable-f16")]
+    VectorF16x3(f16, 3),
+    #[cfg(feature = "unstable-f16")]
+    VectorF16x4(f16, 4),
     VectorF32x2(f32, 2),
     VectorF32x3(f32, 3),
     VectorF32x4(f32, 4),
@@ -96,7 +110,8 @@ impl<T: SimdElement, const N: usize> AsMut<[T; N]> for Vector<T, N>
 }
 
 impl<T, const N: usize> Vector<T, N>
-where T: SimdElement
+where
+  T: SimdElement,
 {
   #[inline]
   pub const fn from_array(array: [T; N]) -> Self
@@ -130,7 +145,8 @@ where T: SimdElement
 }
 
 const impl<T, const N: usize> FromInner for Vector<T, N>
-where T: SimdElement
+where
+  T: SimdElement,
 {
   #[inline]
   fn from_inner(inner: Self::Inner) -> Self
@@ -141,8 +157,8 @@ where T: SimdElement
 
 impl<T, const N: usize> Add for Vector<T, N>
 where
-  T: ConstOne + SimdElement,
-  <Self as Wrapper>::Inner: Add<Output = <Self as Wrapper>::Inner>,
+  T: SimdElement,
+  <Self as Wrapper>::Inner: Add<Output=<Self as Wrapper>::Inner>,
 {
   type Output = Self;
 
@@ -153,10 +169,21 @@ where
   }
 }
 
+impl<T, const N: usize> AddAssign for Vector<T, N>
+where
+  T: SimdElement,
+  <Self as Wrapper>::Inner: AddAssign,
+{
+  #[inline]
+  fn add_assign(&mut self, rhs: Self) {
+    self.inner.add_assign(rhs.inner);
+  }
+}
+
 impl<T, const N: usize> Sub for Vector<T, N>
 where
-  T: ConstOne + SimdElement,
-  <Self as Wrapper>::Inner: Sub<Output = <Self as Wrapper>::Inner>,
+  T: SimdElement,
+  <Self as Wrapper>::Inner: Sub<Output=<Self as Wrapper>::Inner>,
 {
   type Output = Self;
 
@@ -167,10 +194,21 @@ where
   }
 }
 
+impl<T, const N: usize> SubAssign for Vector<T, N>
+where
+  T: SimdElement,
+  <Self as Wrapper>::Inner: SubAssign,
+{
+  #[inline]
+  fn sub_assign(&mut self, rhs: Self) {
+    self.inner.sub_assign(rhs.inner);
+  }
+}
+
 impl<T, const N: usize> Mul for Vector<T, N>
 where
-  T: ConstOne + SimdElement,
-  <Self as Wrapper>::Inner: Mul<Output = <Self as Wrapper>::Inner>,
+  T: SimdElement,
+  <Self as Wrapper>::Inner: Mul<Output=<Self as Wrapper>::Inner>,
 {
   type Output = Self;
 
@@ -181,10 +219,45 @@ where
   }
 }
 
+impl<T, const N: usize> MulAssign for Vector<T, N>
+where
+  T: SimdElement,
+  <Self as Wrapper>::Inner: MulAssign,
+{
+  #[inline]
+  fn mul_assign(&mut self, rhs: Self) {
+    self.inner.mul_assign(rhs.inner);
+  }
+}
+
+impl<T, const N: usize> MulAdd for Vector<T, N>
+where
+  T: SimdElement,
+  <Self as Wrapper>::Inner: SimdMulAdd<Output=<Self as Wrapper>::Inner>,
+{
+  type Output = Self;
+
+  #[inline]
+  fn mul_add(self, a: Self, b: Self) -> Self::Output {
+    Self::from_inner(self.inner.mul_add(a.inner, b.inner))
+  }
+}
+
+impl<T, const N: usize> MulAddAssign for Vector<T, N>
+where
+  T: SimdElement,
+  <Self as Wrapper>::Inner: SimdMulAddAssign,
+{
+  #[inline]
+  fn mul_add_assign(&mut self, a: Self, b: Self) {
+    self.inner.mul_add_assign(a.inner, b.inner);
+  }
+}
+
 impl<T, const N: usize> Div for Vector<T, N>
 where
-  T: ConstOne + SimdElement,
-  <Self as Wrapper>::Inner: Div<Output = <Self as Wrapper>::Inner>,
+  T: SimdElement,
+  <Self as Wrapper>::Inner: Div<Output=<Self as Wrapper>::Inner>,
 {
   type Output = Self;
 
@@ -195,10 +268,21 @@ where
   }
 }
 
+impl<T, const N: usize> DivAssign for Vector<T, N>
+where
+  T: SimdElement,
+  <Self as Wrapper>::Inner: DivAssign,
+{
+  #[inline]
+  fn div_assign(&mut self, rhs: Self) {
+    self.inner.div_assign(rhs.inner);
+  }
+}
+
 impl<T, const N: usize> Rem for Vector<T, N>
 where
-  T: ConstOne + SimdElement,
-  <Self as Wrapper>::Inner: Rem<Output = <Self as Wrapper>::Inner>,
+  T: SimdElement,
+  <Self as Wrapper>::Inner: Rem<Output=<Self as Wrapper>::Inner>,
 {
   type Output = Self;
 
@@ -209,12 +293,23 @@ where
   }
 }
 
+impl<T, const N: usize> RemAssign for Vector<T, N>
+where
+  T: SimdElement,
+  <Self as Wrapper>::Inner: RemAssign,
+{
+  #[inline]
+  fn rem_assign(&mut self, rhs: Self) {
+    self.inner.rem_assign(rhs.inner);
+  }
+}
+
 impl<T, M, const N: usize> Zero for Vector<T, N>
 where
   T: SimdElement + ConstZero,
   M: MaskElement,
-  Self: Add<Output = Self>,
-  <Self as Wrapper>::Inner: SimdPartialEq<Mask = Mask<M, N>>,
+  Self: Add<Output=Self>,
+  <Self as Wrapper>::Inner: SimdPartialEq<Mask=Mask<M, N>>,
 {
   #[inline]
   fn zero() -> Self
@@ -232,8 +327,8 @@ impl<T, M, const N: usize> ConstZero for Vector<T, N>
 where
   T: SimdElement + ConstZero,
   M: MaskElement,
-  Self: Add<Output = Self>,
-  <Self as Wrapper>::Inner: SimdPartialEq<Mask = Mask<M, N>>,
+  Self: Add<Output=Self>,
+  <Self as Wrapper>::Inner: SimdPartialEq<Mask=Mask<M, N>>,
 {
   const ZERO: Self = Self::from_array([T::ZERO; N]);
 }
@@ -241,7 +336,7 @@ where
 impl<T, const N: usize> One for Vector<T, N>
 where
   T: SimdElement + ConstOne,
-  Self: Mul<Output = Self>,
+  Self: Mul<Output=Self>,
 {
   #[inline]
   fn one() -> Self
@@ -253,68 +348,178 @@ where
 impl<T, const N: usize> ConstOne for Vector<T, N>
 where
   T: SimdElement + ConstOne,
-  Self: Mul<Output = Self>,
+  Self: Mul<Output=Self>,
 {
   const ONE: Self = Self::from_array([T::ONE; N]);
 }
 
-macro_rules! impl_for_base {
-  ($ty:ty) => {
-    impl<const N: usize> Vector<$ty, N>
-    {
-      /// vector norm (length)
-      #[inline]
-      pub fn inorm(&self) -> $ty
-      {
-        self.norm_squared().isqrt()
-      }
+impl<T, const N: usize> Norm for Vector<T, N>
+where
+  T: SimdElement + Real,
+  <Self as Wrapper>::Inner:
+  SimdReduceSum<Scalar=T> + Mul<Output=<Self as Wrapper>::Inner>,
+{
+  type Output = T;
 
-      /// Square of the vector norm (length)
-      #[inline]
-      pub fn norm_squared(&self) -> $ty
-      {
-        (self.inner * self.inner).reduce_sum()
-      }
-
-      /// vector norm (length)
-      /// see [Self::norm]
-      #[inline]
-      pub fn ilength(&self) -> $ty
-      {
-        self.inorm()
-      }
-
-      /// Square of the vector norm (length)
-      /// see [Self::norm_squared]
-      #[inline]
-      pub fn length_squared(&self) -> $ty
-      {
-        self.norm_squared()
-      }
-    }
-  };
-  ($($ty:ty)+) => {
-    $(impl_for_base!($ty);)+
-  };
+  #[inline]
+  fn norm(self) -> T
+  {
+    self.norm_squared().sqrt()
+  }
 }
+
+impl<T, const N: usize> NormSquared for Vector<T, N>
+where
+  T: SimdElement,
+  <Self as Wrapper>::Inner:
+  SimdReduceSum<Scalar=T> + Mul<Output=<Self as Wrapper>::Inner>,
+{
+  type Output = T;
+
+  #[inline]
+  fn norm_squared(self) -> T
+  {
+    (self.inner * self.inner).reduce_sum()
+  }
+}
+
+impl<T, const N: usize> NormSquared for &Vector<T, N>
+where
+  T: SimdElement,
+  <Vector<T, N> as Wrapper>::Inner:
+  SimdReduceSum<Scalar=T> + Mul<Output=<Vector<T, N> as Wrapper>::Inner>,
+{
+  type Output = T;
+
+  #[inline]
+  fn norm_squared(self) -> T
+  {
+    (self.inner * self.inner).reduce_sum()
+  }
+}
+
+impl<T, const N: usize> Dot for Vector<T, N>
+where
+  T: SimdElement,
+  <Self as Wrapper>::Inner:
+  SimdReduceSum<Scalar=T> + Mul<Output=<Self as Wrapper>::Inner>,
+{
+  type Output = T;
+
+  #[inline]
+  fn dot(self, rhs: Self) -> Self::Output
+  {
+    self.mul(rhs).inner.reduce_sum()
+  }
+}
+impl<T> Cross for Vector<T, 2>
+where
+  T: SimdElement + Mul<Output=T> + Sub<Output=T>,
+{
+  type Output = T;
+
+  #[inline]
+  fn cross(self, rhs: Self) -> Self::Output
+  {
+    self.x() * rhs.y() - self.y() * rhs.x()
+  }
+}
+
+impl<T> Cross for Vector<T, 3>
+where
+  T: SimdElement,
+  <Self as Wrapper>::Inner: Sub<Output=<Self as Wrapper>::Inner>
+  + Mul<Output=<Self as Wrapper>::Inner>,
+{
+  type Output = Self;
+
+  #[inline]
+  fn cross(self, rhs: Self) -> Self::Output
+  {
+    let y1z2_z1x2_x1y2 = simd_swizzle!(self.inner, [1, 2, 0])
+      .mul(simd_swizzle!(rhs.inner, [2, 0, 1]));
+    let z1y2_x1z2_y1x2 = simd_swizzle!(self.inner, [2, 0, 1])
+      .mul(simd_swizzle!(rhs.inner, [1, 2, 0]));
+    Self::from_inner(y1z2_z1x2_x1y2.sub(z1y2_x1z2_y1x2))
+  }
+}
+impl<T> Cross for Vector<T, 4>
+where
+  T: SimdElement,
+  <Vector<T, 4> as Wrapper>::Inner: Sub<Output=<Vector<T, 4> as Wrapper>::Inner>
+  + Mul<Output=<Vector<T, 4> as Wrapper>::Inner>,
+{
+  type Output = Vector<T, 4>;
+
+  #[inline]
+  fn cross(self, rhs: Self) -> Self::Output
+  {
+    let y1z2_z1x2_x1y2 = simd_swizzle!(self.inner, [1, 2, 0, 3])
+      .mul(simd_swizzle!(rhs.inner, [2, 0, 1, 3]));
+    let z1y2_x1z2_y1x2 = simd_swizzle!(self.inner, [2, 0, 1, 3])
+      .mul(simd_swizzle!(rhs.inner, [1, 2, 0, 3]));
+    Vector::<T, 4>::from_inner(y1z2_z1x2_x1y2.sub(z1y2_x1z2_y1x2))
+  }
+}
+
+impl<T, const N: usize> INorm for Vector<T, N>
+where
+  T: SimdElement + Roots,
+  <Vector<T, N> as Wrapper>::Inner:
+  SimdReduceSum<Scalar=T> + Mul<Output=<Vector<T, N> as Wrapper>::Inner>,
+{
+  type Output = T;
+
+  #[inline]
+  fn inorm(self) -> T
+  {
+    self.norm_squared().sqrt()
+  }
+}
+
+impl<T> Vector<T, 2>
+where
+  T: SimdElement + ConstZero + ConstOne,
+{
+  pub const X: Self = Self::from_array([T::ONE, T::ZERO]);
+  pub const Y: Self = Self::from_array([T::ZERO, T::ONE]);
+}
+impl<T> Vector<T, 3>
+where
+  T: SimdElement + ConstZero + ConstOne,
+{
+  pub const X: Self = Self::from_array([T::ONE, T::ZERO, T::ZERO]);
+  pub const Y: Self = Self::from_array([T::ZERO, T::ONE, T::ZERO]);
+  pub const Z: Self = Self::from_array([T::ZERO, T::ZERO, T::ONE]);
+}
+impl<T> Vector<T, 4>
+where
+  T: SimdElement + ConstZero + ConstOne,
+{
+  pub const W: Self = Self::from_array([T::ZERO, T::ZERO, T::ZERO, T::ONE]);
+  pub const X: Self = Self::from_array([T::ONE, T::ZERO, T::ZERO, T::ZERO]);
+  pub const Y: Self = Self::from_array([T::ZERO, T::ONE, T::ZERO, T::ZERO]);
+  pub const Z: Self = Self::from_array([T::ZERO, T::ZERO, T::ONE, T::ZERO]);
+}
+
 macro_rules! impl_for_int {
   ($ty:ty) => {
-    impl<const N: usize> Vector<$ty, N>
+    impl<const N: usize> CheckedINorm for Vector<$ty, N>
     {
-
-      /// vector norm (length)
+      type Output = $ty;
       #[inline]
-      pub fn checked_inorm(&self) -> Option<$ty>
+      fn checked_inorm(self) -> Option<$ty>
       {
         self.norm_squared().checked_isqrt()
       }
-
-      /// vector norm (length)
-      /// see [Self::norm]
+    }
+    impl<const N: usize> CheckedINorm for &Vector<$ty, N>
+    {
+      type Output = $ty;
       #[inline]
-      pub fn checked_ilength(&self) -> Option<$ty>
+      fn checked_inorm(self) -> Option<$ty>
       {
-        self.checked_inorm()
+        self.norm_squared().checked_isqrt()
       }
     }
   };
@@ -323,155 +528,7 @@ macro_rules! impl_for_int {
   };
 }
 
-macro_rules! impl_for_float {
-  ($ty:ty) => {
-    impl<const N: usize> Vector<$ty, N>
-    {
-      /// vector norm (length)
-      #[inline]
-      pub fn norm(&self) -> $ty
-      {
-        self.norm_squared().sqrt()
-      }
-
-      /// Square of the vector norm (length)
-      #[inline]
-      pub fn norm_squared(&self) -> $ty
-      {
-        (self.inner * self.inner).reduce_sum()
-      }
-
-      /// vector norm (length)
-      /// see [Self::norm]
-      #[inline]
-      pub fn length(&self) -> $ty
-      {
-        self.norm()
-      }
-
-      /// Square of the vector norm (length)
-      /// see [Self::norm_squared]
-      #[inline]
-      pub fn length_squared(&self) -> $ty
-      {
-        self.norm_squared()
-      }
-    }
-  };
-  ($($ty:ty)+) => {
-    $(impl_for_float!($ty);)+
-  };
-}
-macro_rules! impl_for_all {
-  ($ty:ty) => {
-    impl<const N: usize> Dot for Vector<$ty, N>
-    {
-      type Output = $ty;
-      #[inline]
-      fn dot(self, rhs: Self) -> Self::Output
-      {
-        self.mul(rhs).inner.reduce_sum()
-      }
-    }
-    impl Cross for Vector<$ty, 2>
-    {
-      type Output = $ty;
-      #[inline]
-      fn cross(self, rhs: Self) -> Self::Output
-      {
-        self.x() * rhs.y() - self.y() * rhs.x()
-      }
-    }
-    impl Cross for Vector<$ty, 3>
-    {
-      type Output = Self;
-      #[inline]
-      fn cross(self, rhs: Self) -> Self::Output
-      {
-        let y1z2_z1x2_x1y2 = simd_swizzle!(self.inner, [1, 2, 0])
-          .mul(simd_swizzle!(rhs.inner, [2, 0, 1]));
-        let z1y2_x1z2_y1x2 = simd_swizzle!(self.inner, [2, 0, 1])
-          .mul(simd_swizzle!(rhs.inner, [1, 2, 0]));
-        Self::from_inner(y1z2_z1x2_x1y2.sub(z1y2_x1z2_y1x2))
-      }
-    }
-    impl Cross for Vector<$ty, 4>
-    {
-      type Output = Self;
-      #[inline]
-      fn cross(self, rhs: Self) -> Self::Output
-      {
-        let y1z2_z1x2_x1y2 = simd_swizzle!(self.inner, [1, 2, 0, 3])
-          .mul(simd_swizzle!(rhs.inner, [2, 0, 1, 3]));
-        let z1y2_x1z2_y1x2 = simd_swizzle!(self.inner, [2, 0, 1, 3])
-          .mul(simd_swizzle!(rhs.inner, [1, 2, 0, 3]));
-        Self::from_inner(y1z2_z1x2_x1y2.sub(z1y2_x1z2_y1x2))
-      }
-    }
-  };
-  ($($ty:ty)+) => {
-    $(impl_for_all!($ty);)+
-  };
-}
 impl_for_int!(i8 i16 i32 i64);
-impl_for_base!(i8 i16 i32 i64 u8 u16 u32 u64);
-impl_for_float!(f32 f64);
-impl_for_all!(i8 i16 i32 i64 u8 u16 u32 u64 f32 f64);
-
-macro_rules! impl_base_for_all_int {
-  ($ty:ty) => {
-    impl Vector<$ty, 2>
-    {
-      pub const X: Self = Self::from_array([<$ty>::ONE, 0]);
-      pub const Y: Self = Self::from_array([0, 1]);
-    }
-    impl Vector<$ty, 3>
-    {
-      pub const X: Self = Self::from_array([1, 0, 0]);
-      pub const Y: Self = Self::from_array([0, 1, 0]);
-      pub const Z: Self = Self::from_array([0, 0, 1]);
-    }
-    impl Vector<$ty, 4>
-    {
-      pub const X: Self = Self::from_array([1, 0, 0, 0]);
-      pub const Y: Self = Self::from_array([0, 1, 0, 0]);
-      pub const Z: Self = Self::from_array([0, 0, 1, 0]);
-      pub const W: Self = Self::from_array([0, 0, 0, 1]);
-    }
-  };
-  ($($ty:ty)+) => {
-    $(impl_base_for_all_int!($ty);)+
-  };
-}
-
-macro_rules! impl_base_for_float {
-  ($ty:ty) => {
-    impl Vector<$ty, 2>
-    {
-      pub const X: Self = Self::from_array([1.0, 0.0]);
-      pub const Y: Self = Self::from_array([0.0, 1.0]);
-    }
-    impl Vector<$ty, 3>
-    {
-      pub const X: Self = Self::from_array([1.0, 0.0, 0.0]);
-      pub const Y: Self = Self::from_array([0.0, 1.0, 0.0]);
-      pub const Z: Self = Self::from_array([0.0, 0.0, 1.0]);
-    }
-    impl Vector<$ty, 4>
-    {
-      pub const X: Self = Self::from_array([1.0, 0.0, 0.0, 0.0]);
-      pub const Y: Self = Self::from_array([0.0, 1.0, 0.0, 0.0]);
-      pub const Z: Self = Self::from_array([0.0, 0.0, 1.0, 0.0]);
-      pub const W: Self = Self::from_array([0.0, 0.0, 0.0, 1.0]);
-    }
-  };
-  ($($ty:ty)+) => {
-    $(impl_base_for_float!($ty);)+
-  };
-}
-
-impl_base_for_all_int!(i8 i16 i32 i64 u8 u16 u32 u64);
-impl_base_for_float!(f32 f64);
 
 crate::impl_element_getter! {
   Vector {
@@ -490,6 +547,83 @@ mod tests
   use num_traits::{ConstZero, Zero};
 
   use super::*;
+
+  macro_rules! test_for_all {
+    ($func:ident($ty:ty)) => {
+      $func::<$ty, 1>();
+      $func::<$ty, 2>();
+      $func::<$ty, 3>();
+      $func::<$ty, 4>();
+      $func::<$ty, 5>();
+      $func::<$ty, 6>();
+      $func::<$ty, 7>();
+      $func::<$ty, 8>();
+    };
+    (@no_n $func:ident($ty:ty)) => {
+      $func::<$ty>();
+    };
+    ($(@$meta:ident)? $id:ident : $func:ident(int)) => {
+      #[test]
+      fn $id()
+      {
+        test_for_all!($(@$meta)? $func(i8));
+        test_for_all!($(@$meta)? $func(i16));
+        test_for_all!($(@$meta)? $func(i32));
+        test_for_all!($(@$meta)? $func(i64));
+      }
+    };
+    ($(@$meta:ident)? $id:ident : $func:ident(uint)) => {
+      #[test]
+      fn $id()
+      {
+        test_for_all!($(@$meta)? $func(u8));
+        test_for_all!($(@$meta)? $func(u16));
+        test_for_all!($(@$meta)? $func(u32));
+        test_for_all!($(@$meta)? $func(u64));
+      }
+    };
+    ($(@$meta:ident)? $id:ident : $func:ident(int uint)) => {
+      #[test]
+      fn $id()
+      {
+        test_for_all!($(@$meta)? $func(i8));
+        test_for_all!($(@$meta)? $func(u8));
+        test_for_all!($(@$meta)? $func(i16));
+        test_for_all!($(@$meta)? $func(u16));
+        test_for_all!($(@$meta)? $func(i32));
+        test_for_all!($(@$meta)? $func(u32));
+        test_for_all!($(@$meta)? $func(i64));
+        test_for_all!($(@$meta)? $func(u64));
+        test_for_all!($(@$meta)? $func(f32));
+        test_for_all!($(@$meta)? $func(f64));
+      }
+    };
+    ($(@$meta:ident)? $id:ident : $func:ident(float)) => {
+      #[test]
+      fn $id()
+      {
+        test_for_all!($(@$meta)? $func(f32));
+        test_for_all!($(@$meta)? $func(f64));
+      }
+    };
+    ($(@$meta:ident)? $id:ident : $func:ident) => {
+      #[test]
+      fn $id()
+      {
+        test_for_all!($(@$meta)? $func(i8));
+        test_for_all!($(@$meta)? $func(u8));
+        test_for_all!($(@$meta)? $func(i16));
+        test_for_all!($(@$meta)? $func(u16));
+        test_for_all!($(@$meta)? $func(i32));
+        test_for_all!($(@$meta)? $func(u32));
+        test_for_all!($(@$meta)? $func(i64));
+        test_for_all!($(@$meta)? $func(u64));
+        test_for_all!($(@$meta)? $func(f32));
+        test_for_all!($(@$meta)? $func(f64));
+      }
+    };
+  }
+
   #[test]
   fn test_norm()
   {
@@ -511,10 +645,29 @@ mod tests
     assert_eq!(norm * norm, norm_squared);
     assert_eq!(norm_squared, 54.0);
   }
+
   #[test]
   fn test_inorm()
   {
-    let vec = VectorI32x2::from_array([1, 7]);
+    let vec = VectorU32x2::from_array([1, 7]);
+    let norm_squared = vec.norm_squared();
+    let norm = vec.inorm();
+    assert_eq!(norm_squared, 50);
+    assert_eq!(norm, norm_squared.isqrt());
+
+    let vec = VectorU32x3::from_array([3, 4, 5]);
+    let norm_squared = vec.norm_squared();
+    let norm = vec.inorm();
+    assert_eq!(norm_squared, 50);
+    assert_eq!(norm, norm_squared.isqrt());
+
+    let vec = VectorU32x4::from_array([2, 3, 4, 5]);
+    let norm_squared = vec.norm_squared();
+    let norm = vec.inorm();
+    assert_eq!(norm_squared, 54);
+    assert_eq!(norm, norm_squared.isqrt());
+
+    let vec = VectorU32x2::from_array([1, 7]);
     let norm_squared = vec.norm_squared();
     let norm = vec.inorm();
     assert_eq!(norm_squared, 50);
@@ -532,6 +685,7 @@ mod tests
     assert_eq!(norm_squared, 54);
     assert_eq!(norm, norm_squared.isqrt());
   }
+
   #[test]
   fn test_checked_inorm()
   {
@@ -553,6 +707,7 @@ mod tests
     assert_eq!(norm_squared, 54);
     assert_eq!(norm, norm_squared.checked_isqrt());
   }
+
   #[test]
   fn test_length()
   {
@@ -572,6 +727,7 @@ mod tests
     assert_eq!(length * length, length_squared);
     assert_eq!(length_squared, 54.0);
   }
+
   #[test]
   fn test_dot()
   {
@@ -588,6 +744,7 @@ mod tests
     let d = vec1.dot(vec2);
     assert_eq!(d, 70.0);
   }
+
   #[test]
   fn test_cross()
   {
@@ -608,33 +765,110 @@ mod tests
     assert_eq!(d, right);
   }
 
-  fn test_template_const_zero<T, const N: usize>()
+  fn const_zero_n<T, const N: usize>()
   where
     T: Debug + ConstZero + SimdElement + PartialEq,
     Vector<T, N>: ConstZero,
   {
     assert!(Vector::<T, N>::zero().as_array().iter().all(|&x| x == T::zero()));
     assert!(Vector::<T, N>::ZERO.as_array().iter().all(|&x| x == T::ZERO));
+    let mut vec = Vector::<T, N>::ZERO;
+    assert!(vec.is_zero());
+    vec.set_zero();
+    assert!(vec.is_zero());
   }
 
-  fn test_template_const_one<T, const N: usize>()
+  fn const_one_n<T, const N: usize>()
   where
     T: Debug + ConstOne + SimdElement + PartialEq,
     Vector<T, N>: ConstOne,
   {
     assert!(Vector::<T, N>::one().as_array().iter().all(|&x| x == T::one()));
     assert!(Vector::<T, N>::ONE.as_array().iter().all(|&x| x == T::ONE));
+    let mut vec = Vector::<T, N>::ONE;
+    assert!(vec.is_one());
+    vec.set_one();
+    assert!(vec.is_one());
   }
 
-  #[test]
-  fn test_const_zero()
+  test_for_all!(test_const_zero: const_zero_n);
+  test_for_all!(test_const_one: const_one_n);
+
+  fn base_2<T>()
+  where
+    T: Debug + ConstZero + ConstOne + SimdElement + PartialEq,
   {
-    test_template_const_zero::<f32, 4>()
+    let array = Vector::<T, 2>::X.to_array();
+    assert_eq!(array.iter().position(|x| x == &T::ONE), Some(0));
+    assert_eq!(array.iter().filter(|&x| x == &T::ZERO).count(), 1);
+    assert_eq!(array.iter().filter(|&x| x == &T::ONE).count(), 1);
+
+    let array = Vector::<T, 2>::Y.to_array();
+    assert_eq!(array.iter().position(|x| x == &T::ONE), Some(1));
+    assert_eq!(array.iter().filter(|&x| x == &T::ZERO).count(), 1);
+    assert_eq!(array.iter().filter(|&x| x == &T::ONE).count(), 1);
   }
 
-  #[test]
-  fn test_const_one()
+  fn base_3<T>()
+  where
+    T: Debug + ConstZero + ConstOne + SimdElement + PartialEq,
   {
-    test_template_const_one::<f32, 4>()
+    let array = Vector::<T, 3>::X.to_array();
+    assert_eq!(array.iter().position(|x| x == &T::ONE), Some(0));
+    assert_eq!(array.iter().filter(|&x| x == &T::ZERO).count(), 2);
+    assert_eq!(array.iter().filter(|&x| x == &T::ONE).count(), 1);
+
+    let array = Vector::<T, 3>::Y.to_array();
+    assert_eq!(array.iter().position(|x| x == &T::ONE), Some(1));
+    assert_eq!(array.iter().filter(|&x| x == &T::ZERO).count(), 2);
+    assert_eq!(array.iter().filter(|&x| x == &T::ONE).count(), 1);
+
+    let array = Vector::<T, 3>::Z.to_array();
+    assert_eq!(array.iter().position(|x| x == &T::ONE), Some(2));
+    assert_eq!(array.iter().filter(|&x| x == &T::ZERO).count(), 2);
+    assert_eq!(array.iter().filter(|&x| x == &T::ONE).count(), 1);
   }
+
+  fn base_4<T>()
+  where
+    T: Debug + ConstZero + ConstOne + SimdElement + PartialEq,
+  {
+    let array = Vector::<T, 4>::X.to_array();
+    assert_eq!(array.iter().position(|x| x == &T::ONE), Some(0));
+    assert_eq!(array.iter().filter(|&x| x == &T::ZERO).count(), 3);
+    assert_eq!(array.iter().filter(|&x| x == &T::ONE).count(), 1);
+
+    let array = Vector::<T, 4>::Y.to_array();
+    assert_eq!(array.iter().position(|x| x == &T::ONE), Some(1));
+    assert_eq!(array.iter().filter(|&x| x == &T::ZERO).count(), 3);
+    assert_eq!(array.iter().filter(|&x| x == &T::ONE).count(), 1);
+
+    let array = Vector::<T, 4>::Z.to_array();
+    assert_eq!(array.iter().position(|x| x == &T::ONE), Some(2));
+    assert_eq!(array.iter().filter(|&x| x == &T::ZERO).count(), 3);
+    assert_eq!(array.iter().filter(|&x| x == &T::ONE).count(), 1);
+
+    let array = Vector::<T, 4>::W.to_array();
+    assert_eq!(array.iter().position(|x| x == &T::ONE), Some(3));
+    assert_eq!(array.iter().filter(|&x| x == &T::ZERO).count(), 3);
+    assert_eq!(array.iter().filter(|&x| x == &T::ONE).count(), 1);
+  }
+
+  test_for_all!(@no_n test_base_2: base_2);
+  test_for_all!(@no_n test_base_3: base_3);
+  test_for_all!(@no_n test_base_4: base_4);
+
+  fn mul_add<T>()
+  where
+    T: Debug + ConstZero + ConstOne + SimdElement + PartialEq,
+    Vector<T, 3>: Add<Output=Vector<T, 3>> + Mul<Output=Vector<T, 3>> + MulAdd<Output=Vector<T, 3>>,
+  {
+    let u = Vector::<T, 3>::from_array([T::ONE, T::ZERO, T::ZERO]);
+    let v = Vector::<T, 3>::from_array([T::ZERO, T::ONE, T::ZERO]);
+    let w = Vector::<T, 3>::from_array([T::ONE, T::ONE, T::ZERO]);
+    assert_eq!(u + v, w);
+    assert_eq!((u * v) + w, u.mul_add(v, w));
+  }
+
+  test_for_all!(@no_n test_mul_add: mul_add(float));
 }

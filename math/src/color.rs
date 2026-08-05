@@ -111,6 +111,23 @@ crate::type_defines! {
     GU64(u64, G, 1),
     GaU64(u64, Ga, 2),
 
+    #[cfg(feature = "unstable-f16")]
+    RgbF16(f16, Rgb, 3),
+    #[cfg(feature = "unstable-f16")]
+    RgbaF16(f16, Rgba, 4),
+    #[cfg(feature = "unstable-f16")]
+    BgrF16(f16, Bgr, 3),
+    #[cfg(feature = "unstable-f16")]
+    BgraF16(f16, Bgra, 4),
+    #[cfg(feature = "unstable-f16")]
+    HsvF16(f16, Hsv, 3),
+    #[cfg(feature = "unstable-f16")]
+    HsvaF16(f16, Hsva, 4),
+    #[cfg(feature = "unstable-f16")]
+    GF16(f16, G, 1),
+    #[cfg(feature = "unstable-f16")]
+    GaF16(f16, Ga, 2),
+
     RgbF32(f32, Rgb, 3),
     RgbaF32(f32, Rgba, 4),
     BgrF32(f32, Bgr, 3),

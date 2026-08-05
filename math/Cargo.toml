@@ -46,11 +46,14 @@ std-unstable-shape = [
 unstable = []
 unstable-full = [
     "unstable",
+    "unstable-f16",
     "std-unstable-matrix",
     "std-unstable-vector",
     "std-unstable-color",
     "std-unstable-shape",
 ]
+
+unstable-f16 = ["unstable"]
 
 __feature-portable_simd = ["unstable"]
 __feature-algosul-wrapper = ["unstable", "algosul-core/wrapper", "algosul-derive/wrapper", "algosul-derive/unstable"]
