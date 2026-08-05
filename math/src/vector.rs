@@ -1,8 +1,12 @@
 use std::{
-  ops::{Add, Div, Mul, Sub},
+  borrow::Borrow,
+  ops::{Add, Div, Mul, Rem, Sub},
   simd::{
+    Mask,
+    MaskElement,
     Simd,
     SimdElement,
+    cmp::SimdPartialEq,
     num::{SimdFloat, SimdInt, SimdUint},
     simd_swizzle,
   },
@@ -10,6 +14,8 @@ use std::{
 
 use algosul_core::wrapper::prelude::*;
 use algosul_derive::Wrapper;
+use num::{One, traits::ConstOne};
+use num_traits::{ConstZero, Zero};
 
 use crate::ops::{Cross, Dot};
 
@@ -71,6 +77,24 @@ crate::type_defines! {
   }
 }
 
+impl<T: SimdElement, const N: usize> AsRef<[T; N]> for Vector<T, N>
+{
+  #[inline]
+  fn as_ref(&self) -> &[T; N]
+  {
+    self.inner.as_ref()
+  }
+}
+
+impl<T: SimdElement, const N: usize> AsMut<[T; N]> for Vector<T, N>
+{
+  #[inline]
+  fn as_mut(&mut self) -> &mut [T; N]
+  {
+    self.inner.as_mut()
+  }
+}
+
 impl<T, const N: usize> Vector<T, N>
 where T: SimdElement
 {
@@ -78,6 +102,24 @@ where T: SimdElement
   pub const fn from_array(array: [T; N]) -> Self
   {
     Self::from_inner(<Self as Wrapper>::Inner::from_array(array))
+  }
+
+  #[inline]
+  pub const fn as_array(&self) -> &[T; N]
+  {
+    self.inner.as_array()
+  }
+
+  #[inline]
+  pub const fn as_mut_array(&mut self) -> &mut [T; N]
+  {
+    self.inner.as_mut_array()
+  }
+
+  #[inline]
+  pub const fn to_array(self) -> [T; N]
+  {
+    self.inner.to_array()
   }
 
   #[inline]
@@ -95,6 +137,125 @@ where T: SimdElement
   {
     Self { inner }
   }
+}
+
+impl<T, const N: usize> Add for Vector<T, N>
+where
+  T: ConstOne + SimdElement,
+  <Self as Wrapper>::Inner: Add<Output = <Self as Wrapper>::Inner>,
+{
+  type Output = Self;
+
+  #[inline]
+  fn add(self, rhs: Self) -> Self::Output
+  {
+    Self::from_inner(self.inner.add(rhs.inner))
+  }
+}
+
+impl<T, const N: usize> Sub for Vector<T, N>
+where
+  T: ConstOne + SimdElement,
+  <Self as Wrapper>::Inner: Sub<Output = <Self as Wrapper>::Inner>,
+{
+  type Output = Self;
+
+  #[inline]
+  fn sub(self, rhs: Self) -> Self::Output
+  {
+    Self::from_inner(self.inner.sub(rhs.inner))
+  }
+}
+
+impl<T, const N: usize> Mul for Vector<T, N>
+where
+  T: ConstOne + SimdElement,
+  <Self as Wrapper>::Inner: Mul<Output = <Self as Wrapper>::Inner>,
+{
+  type Output = Self;
+
+  #[inline]
+  fn mul(self, rhs: Self) -> Self::Output
+  {
+    Self::from_inner(self.inner.mul(rhs.inner))
+  }
+}
+
+impl<T, const N: usize> Div for Vector<T, N>
+where
+  T: ConstOne + SimdElement,
+  <Self as Wrapper>::Inner: Div<Output = <Self as Wrapper>::Inner>,
+{
+  type Output = Self;
+
+  #[inline]
+  fn div(self, rhs: Self) -> Self::Output
+  {
+    Self::from_inner(self.inner.div(rhs.inner))
+  }
+}
+
+impl<T, const N: usize> Rem for Vector<T, N>
+where
+  T: ConstOne + SimdElement,
+  <Self as Wrapper>::Inner: Rem<Output = <Self as Wrapper>::Inner>,
+{
+  type Output = Self;
+
+  #[inline]
+  fn rem(self, rhs: Self) -> Self::Output
+  {
+    Self::from_inner(self.inner.rem(rhs.inner))
+  }
+}
+
+impl<T, M, const N: usize> Zero for Vector<T, N>
+where
+  T: SimdElement + ConstZero,
+  M: MaskElement,
+  Self: Add<Output = Self>,
+  <Self as Wrapper>::Inner: SimdPartialEq<Mask = Mask<M, N>>,
+{
+  #[inline]
+  fn zero() -> Self
+  {
+    Self::ZERO
+  }
+
+  fn is_zero(&self) -> bool
+  {
+    self.inner.simd_eq(Self::ZERO.inner).all()
+  }
+}
+
+impl<T, M, const N: usize> ConstZero for Vector<T, N>
+where
+  T: SimdElement + ConstZero,
+  M: MaskElement,
+  Self: Add<Output = Self>,
+  <Self as Wrapper>::Inner: SimdPartialEq<Mask = Mask<M, N>>,
+{
+  const ZERO: Self = Self::from_array([T::ZERO; N]);
+}
+
+impl<T, const N: usize> One for Vector<T, N>
+where
+  T: SimdElement + ConstOne,
+  Self: Mul<Output = Self>,
+{
+  #[inline]
+  fn one() -> Self
+  {
+    Self::ONE
+  }
+}
+
+impl<T, const N: usize> ConstOne for Vector<T, N>
+where
+  T: SimdElement + ConstOne,
+  Self: Mul<Output = Self>,
+{
+  const ONE: Self = Self::from_array([T::ONE; N]);
 }
 
 macro_rules! impl_for_base {
@@ -203,42 +364,6 @@ macro_rules! impl_for_float {
 }
 macro_rules! impl_for_all {
   ($ty:ty) => {
-    impl<const N: usize> Add for Vector<$ty, N>
-    {
-      type Output = Self;
-      #[inline]
-      fn add(self, rhs: Self) -> Self
-      {
-        Self::from_inner(self.inner.add(rhs.inner))
-      }
-    }
-    impl<const N: usize> Sub for Vector<$ty, N>
-    {
-      type Output = Self;
-      #[inline]
-      fn sub(self, rhs: Self) -> Self
-      {
-        Self::from_inner(self.inner.sub(rhs.inner))
-      }
-    }
-    impl<const N: usize> Mul for Vector<$ty, N>
-    {
-      type Output = Self;
-      #[inline]
-      fn mul(self, rhs: Self) -> Self
-      {
-        Self::from_inner(self.inner.mul(rhs.inner))
-      }
-    }
-    impl<const N: usize> Div for Vector<$ty, N>
-    {
-      type Output = Self;
-      #[inline]
-      fn div(self, rhs: Self) -> Self
-      {
-        Self::from_inner(self.inner.div(rhs.inner))
-      }
-    }
     impl<const N: usize> Dot for Vector<$ty, N>
     {
       type Output = $ty;
@@ -293,36 +418,11 @@ impl_for_base!(i8 i16 i32 i64 u8 u16 u32 u64);
 impl_for_float!(f32 f64);
 impl_for_all!(i8 i16 i32 i64 u8 u16 u32 u64 f32 f64);
 
-macro_rules! impl_consts_for_all_int {
-  ($ty:ty) => {
-    impl<const N: usize> Vector<$ty, N>
-    {
-      pub const ZERO: Self = Self::from_array([0; N]);
-    }
-  };
-  ($($ty:ty)+) => {
-    $(impl_consts_for_all_int!($ty);)+
-  };
-}
-macro_rules! impl_consts_for_float {
-  ($ty:ty) => {
-    impl<const N: usize> Vector<$ty, N>
-    {
-      pub const ZERO: Self = Self::from_array([0.0; N]);
-    }
-  };
-  ($($ty:ty)+) => {
-    $(impl_consts_for_float!($ty);)+
-  };
-}
-impl_consts_for_all_int!(i8 u8 i16 u16 i32 u32 i64 u64);
-impl_consts_for_float!(f32 f64);
-
 macro_rules! impl_base_for_all_int {
   ($ty:ty) => {
     impl Vector<$ty, 2>
     {
-      pub const X: Self = Self::from_array([1, 0]);
+      pub const X: Self = Self::from_array([<$ty>::ONE, 0]);
       pub const Y: Self = Self::from_array([0, 1]);
     }
     impl Vector<$ty, 3>
@@ -385,6 +485,10 @@ crate::impl_element_getter! {
 #[cfg(test)]
 mod tests
 {
+  use std::fmt::Debug;
+
+  use num_traits::{ConstZero, Zero};
+
   use super::*;
   #[test]
   fn test_norm()
@@ -502,5 +606,35 @@ mod tests
     let right = VectorF32x4::from_array([-4.0, 8.0, -4.0, 0.0]);
     let d = vec1.cross(vec2);
     assert_eq!(d, right);
+  }
+
+  fn test_template_const_zero<T, const N: usize>()
+  where
+    T: Debug + ConstZero + SimdElement + PartialEq,
+    Vector<T, N>: ConstZero,
+  {
+    assert!(Vector::<T, N>::zero().as_array().iter().all(|&x| x == T::zero()));
+    assert!(Vector::<T, N>::ZERO.as_array().iter().all(|&x| x == T::ZERO));
+  }
+
+  fn test_template_const_one<T, const N: usize>()
+  where
+    T: Debug + ConstOne + SimdElement + PartialEq,
+    Vector<T, N>: ConstOne,
+  {
+    assert!(Vector::<T, N>::one().as_array().iter().all(|&x| x == T::one()));
+    assert!(Vector::<T, N>::ONE.as_array().iter().all(|&x| x == T::ONE));
+  }
+
+  #[test]
+  fn test_const_zero()
+  {
+    test_template_const_zero::<f32, 4>()
+  }
+
+  #[test]
+  fn test_const_one()
+  {
+    test_template_const_one::<f32, 4>()
   }
 }

@@ -38,7 +38,8 @@ fluent = "0.17.0"
 unic-langid = "0.9.6"
 unic-langid-impl = "0.9.6"
 uuid = { version = "1.23.1", default-features = false }
-simd = { version = "0.2.5", default-features = false }
+num = "0.4.3"
+num-traits = "0.2.19"
 
 [package]
 name = "algosul"

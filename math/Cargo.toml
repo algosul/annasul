@@ -61,3 +61,5 @@ serde = []
 [dependencies]
 algosul-core = { workspace = true, public = true }
 algosul-derive = { workspace = true, public = true }
+num = { workspace = true, public = true }
+num-traits = { workspace = true, public = true }

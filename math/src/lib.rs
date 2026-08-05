@@ -17,5 +17,7 @@ pub mod shape;
 
 pub mod ops;
 
+pub use ::num;
+
 #[cfg(feature = "__feature-portable_simd")]
 pub(crate) mod simd;
