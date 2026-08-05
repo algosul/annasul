@@ -1,5 +1,13 @@
-/.vs
-/.vscode
-/.idea
 
-/target
+# IDE Directorys
+.vs/
+.vscode/
+.idea/
+
+# Rust Target directory
+/target/
+
+# Claude Code
+**/CLAUDE.md
+.spec-workflow/
+.serena/

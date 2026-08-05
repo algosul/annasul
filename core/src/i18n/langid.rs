@@ -75,3 +75,40 @@ impl Display for LanguageIdentifier
     self.inner.fmt(f)
   }
 }
+
+#[cfg(test)]
+mod tests
+{
+  use super::*;
+
+  #[test]
+  fn parse_valid_identifier()
+  {
+    let id: LanguageIdentifier = "zh-Hans".parse().unwrap();
+    assert_eq!(id.to_string(), "zh-Hans");
+    let id: LanguageIdentifier = "en-US".parse().unwrap();
+    assert_eq!(id.to_string(), "en-US");
+    let id: LanguageIdentifier = "zh".parse().unwrap();
+    assert_eq!(id.to_string(), "zh");
+  }
+
+  #[test]
+  fn invalid_identifier_errors()
+  {
+    // Obviously invalid input should yield Err
+    let r: Result<LanguageIdentifier> = "".parse();
+    assert!(r.is_err());
+    let r: Result<LanguageIdentifier> = "123".parse();
+    assert!(r.is_err());
+  }
+
+  #[test]
+  fn display_roundtrip_and_eq()
+  {
+    let a: LanguageIdentifier = "en-GB".parse().unwrap();
+    let b: LanguageIdentifier = "en-gb".parse().unwrap();
+    // Equal after normalization (unic-langid unifies case and region)
+    assert_eq!(a, b);
+    assert_eq!(a.to_string(), b.to_string());
+  }
+}

@@ -4,7 +4,7 @@ use std::{
 };
 
 use algosul_core::wrapper::prelude::*;
-use algosul_derive::Wrapper;
+use algosul_derive::{Wrapper, template};
 
 use crate::color::space::{Bgr, Bgra, ColorSpace, G, Ga, Hsv, Hsva, Rgb, Rgba};
 
@@ -148,6 +148,43 @@ crate::type_defines! {
   }
 }
 
+#[algosul_derive::template_fn(test)]
+fn test() {}
+
+// template! {
+//   enum ColorSpace {
+//     Rgb,
+//     Rgba,
+//     Bgr,
+//     Bgra,
+//     Hsv,
+//     Hsva,
+//     G,
+//     Ga,
+//   }
+//   enum real_type {
+//     u8,
+//     i8,
+//     u16,
+//     i16,
+//     u32,
+//     i32,
+//     u64,
+//     i64,
+//   }
+//   impl<$space: ColorSpace, $real_type> {
+//     type <$space, {$real_type.upper_first()}> = Color<$real_type, $space,
+// {$space::CHANNELS.len()}>     RgbI8(i8, Rgb, 3),
+//     RgbaI8(i8, Rgba, 4),
+//     BgrI8(i8, Bgr, 3),
+//     BgraI8(i8, Bgra, 4),
+//     HsvI8(i8, Hsv, 3),
+//     HsvaI8(i8, Hsva, 4),
+//     GI8(i8, G, 1),
+//     GaI8(i8, Ga, 2),
+//   }
+// }
+
 impl<T, S, const N: usize> Color<T, S, N>
 where
   T: SimdElement,
@@ -233,4 +270,98 @@ impl_base_for_all! {
   u32, 0u32, 1u32
   i64, 0i64, 1i64
   u64, 0u64, 1u64
+}
+
+#[cfg(test)]
+mod tests
+{
+  use super::*;
+  use crate::color::traits::{Alpha, Gray, Hsv, Rgb};
+
+  #[test]
+  fn from_array_stores_channels()
+  {
+    let c = RgbU8::from_array([10, 20, 30]);
+    assert_eq!(c.inner().to_array(), [10, 20, 30]);
+  }
+
+  #[test]
+  fn rgb_accessors()
+  {
+    let c = RgbU8::from_array([1, 2, 3]);
+    assert_eq!(c.r(), 1);
+    assert_eq!(c.g(), 2);
+    assert_eq!(c.b(), 3);
+  }
+
+  #[test]
+  fn rgba_alpha_accessor()
+  {
+    let c = RgbaU8::from_array([1, 2, 3, 255]);
+    assert_eq!(c.r(), 1);
+    assert_eq!(c.g(), 2);
+    assert_eq!(c.b(), 3);
+    assert_eq!(c.a(), 255);
+  }
+
+  #[test]
+  fn hsv_accessors()
+  {
+    let c = HsvU8::from_array([120, 50, 200]);
+    assert_eq!(c.h(), 120);
+    assert_eq!(c.s(), 50);
+    assert_eq!(c.v(), 200);
+  }
+
+  #[test]
+  fn gray_accessor()
+  {
+    let c = GU8::from_array([90]);
+    assert_eq!(c.gray(), 90);
+    let ca = GaU8::from_array([90, 255]);
+    assert_eq!(ca.gray(), 90);
+    assert_eq!(ca.a(), 255);
+  }
+
+  #[test]
+  fn zero_const_is_all_zero()
+  {
+    let c = RgbI16::ZERO;
+    assert_eq!(c.inner().to_array(), [0, 0, 0]);
+    let c = RgbaI16::ZERO;
+    assert_eq!(c.inner().to_array(), [0, 0, 0, 0]);
+  }
+
+  #[test]
+  fn base_consts_are_unit_channels()
+  {
+    let r = RgbU8::R;
+    assert_eq!(r.inner().to_array(), [1, 0, 0]);
+    let g = RgbU8::G;
+    assert_eq!(g.inner().to_array(), [0, 1, 0]);
+    let b = RgbU8::B;
+    assert_eq!(b.inner().to_array(), [0, 0, 1]);
+    // Rgba's RA = [1,0,0,1]
+    let ra = RgbaU8::RA;
+    assert_eq!(ra.inner().to_array(), [1, 0, 0, 1]);
+  }
+
+  #[test]
+  fn bgr_channel_order()
+  {
+    // Bgr channel order is [Blue, Green, Red], verified via the inner Simd
+    let c = BgrU8::from_array([1, 2, 3]);
+    assert_eq!(c.inner().to_array(), [1, 2, 3]);
+  }
+
+  #[test]
+  fn from_slice_and_wrapper()
+  {
+    let c = RgbF32::from_slice(&[0.5, 0.25, 0.0]);
+    assert_eq!(c.inner().to_array(), [0.5, 0.25, 0.0]);
+    let c2 = RgbF32::from_inner(std::simd::Simd::from_array([0.5, 0.25, 0.0]));
+    // Color does not implement PartialEq for floats, so compare the inner
+    // array members instead
+    assert_eq!(c2.inner().to_array(), [0.5, 0.25, 0.0]);
+  }
 }

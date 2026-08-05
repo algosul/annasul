@@ -131,3 +131,70 @@ impl Debug for ModuleWrapper
       .finish()
   }
 }
+
+#[cfg(test)]
+mod tests
+{
+  use super::*;
+
+  #[derive(Clone)]
+  struct DummyModule(&'static str);
+
+  impl Module for DummyModule
+  {
+    fn name(&self) -> &str
+    {
+      self.0
+    }
+  }
+
+  #[test]
+  fn register_and_get()
+  {
+    let mut manager = ModuleManager::new().unwrap();
+    let id1 = manager.register_module(DummyModule("alpha"));
+    let id2 = manager.register_module(DummyModule("beta"));
+    // IDs must be strictly increasing and mutually distinct
+    assert_ne!(id1, id2);
+
+    let m = manager.get(id1).expect("module 1 registered");
+    assert_eq!(m.as_ref().name(), "alpha");
+    let m = manager.get(id2).expect("module 2 registered");
+    assert_eq!(m.as_ref().name(), "beta");
+  }
+
+  #[test]
+  fn get_returns_none_for_unknown()
+  {
+    let mut manager = ModuleManager::new().unwrap();
+    let id = manager.register_module(DummyModule("x"));
+    assert!(manager.get(id).is_some());
+    // An unregistered ID
+    assert!(manager.get(ModuleID(std::usize::MAX)).is_none());
+  }
+
+  #[test]
+  fn unregister_removes_module()
+  {
+    let mut manager = ModuleManager::new().unwrap();
+    let id = manager.register_module(DummyModule("x"));
+    assert!(manager.get(id).is_some());
+    assert!(manager.unregister_module(id).is_ok());
+    assert!(manager.get(id).is_none());
+    // Unregistering again errors
+    assert!(matches!(manager.unregister_module(id), Err(Error::NonExistentModuleID)));
+  }
+
+  #[test]
+  fn get_mut_can_mutate()
+  {
+    let mut manager = ModuleManager::new().unwrap();
+    let id = manager.register_module(DummyModule("before"));
+    {
+      // get_mut only provides a mutable reference; DummyModule has no mutable
+      // state, so this only exercises the return / unwind path
+      let _m = manager.get_mut(id).expect("module present");
+    }
+    assert!(manager.get(id).is_some());
+  }
+}

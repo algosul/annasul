@@ -1,5 +1,5 @@
-use proc_macro2::{Ident, Span, TokenStream};
-use proc_macro_warning::FormattedWarning;
+use algosul_derive_util::Logger;
+use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::{ToTokens, quote};
 use syn::{
   Attribute,
@@ -13,11 +13,10 @@ use syn::{
   spanned::Spanned,
 };
 
-#[derive(Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct WrapperParser
 {
-  warnings: Vec<FormattedWarning>,
-  errors:   Vec<Error>,
+  logger: Logger,
 }
 
 impl WrapperParser
@@ -31,13 +30,10 @@ impl WrapperParser
   {
     let impl_token_stream = self.for_derive_input(derive_input);
 
-    let errors: Vec<_> =
-      self.errors.iter().map(Error::to_compile_error).collect();
-    let warnings = &self.warnings;
+    let logger = &self.logger;
 
     quote! {
-      #(#errors)*
-      #(#warnings)*
+      #logger
       #impl_token_stream
     }
   }
@@ -54,9 +50,10 @@ impl WrapperParser
         if let Some((inner_index, inner_ident, inner_type)) =
           self.for_struct(data, derive_input.span())
         {
-          let inner = inner_ident
-            .map(ToTokens::into_token_stream)
-            .unwrap_or(inner_index.into_token_stream());
+          let inner =
+            inner_ident.map(ToTokens::into_token_stream).unwrap_or_else(|| {
+              Literal::usize_unsuffixed(inner_index).into_token_stream()
+            });
           quote! {
             impl #impl_generics Wrapper for #name #type_generics
               #where_clause
@@ -104,10 +101,10 @@ impl WrapperParser
     {
       let ident_name =
         field.ident.as_ref().map(Ident::to_string).unwrap_or(i.to_string());
-      self.errors.push(Error::new_spanned(
+      self.logger.error_spanned(
         &field.vis,
         format!("#[wrapper(inner)] cannot use for public field `{ident_name}`"),
-      ));
+      );
     }
   }
 
@@ -136,10 +133,10 @@ impl WrapperParser
       }
       else
       {
-        self.errors.push(Error::new_spanned(
+        self.logger.error_spanned(
           attr,
           format!("Invalid attribute: `{}`", attr.to_token_stream()),
-        ));
+        );
         return;
       };
       if arg == "inner"
@@ -147,10 +144,9 @@ impl WrapperParser
         self.attr_inner_check(&arg, i, field);
         if option_field.is_some()
         {
-          self.errors.push(Error::new_spanned(
-            attr,
-            "Duplicate `#[wrapper(inner)]` attribute",
-          ));
+          self
+            .logger
+            .error_spanned(attr, "Duplicate `#[wrapper(inner)]` attribute");
         }
         else
         {
@@ -159,10 +155,10 @@ impl WrapperParser
       }
       else
       {
-        self.errors.push(Error::new_spanned(
+        self.logger.error_spanned(
           &arg,
           format!("Invalid attribute `#[wrapper({arg})]`"),
-        ));
+        );
       }
     }
   }
@@ -177,7 +173,7 @@ impl WrapperParser
       self.for_struct_field(&mut option_field, i, field);
     }
     option_field.or_else(|| {
-      self.errors.push(Error::new(span, "no set `#[wrapper(inner)]`"));
+      self.logger.error(span, "no set `#[wrapper(inner)]`");
       None
     })
   }

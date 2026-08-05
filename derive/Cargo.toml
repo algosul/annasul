@@ -28,6 +28,7 @@ required-features = ["wrapper"]
 
 [dependencies]
 algosul-core = { workspace = true, public = true }
+algosul-derive-util = { workspace = true, public = true }
 proc-macro2.workspace = true
 proc-macro-warning.workspace = true
 quote.workspace = true

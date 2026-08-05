@@ -103,3 +103,55 @@ where T: SimdElement
     Self { inner }
   }
 }
+
+#[cfg(test)]
+mod tests
+{
+  use super::*;
+  use algosul_core::wrapper::Inner;
+
+  #[test]
+  fn from_array_stores_elements()
+  {
+    let m = MatrixI32x2x2::from_array([1, 2, 3, 4]);
+    assert_eq!(m.inner().to_array(), [1, 2, 3, 4]);
+  }
+
+  #[test]
+  fn from_slice_stores_elements()
+  {
+    let m = MatrixF32x2x2::from_slice(&[1.0, 2.0, 3.0, 4.0]);
+    assert_eq!(m.inner().to_array(), [1.0, 2.0, 3.0, 4.0]);
+  }
+
+  #[test]
+  fn default_is_zero()
+  {
+    let m = MatrixI32x3x3::default();
+    assert!(m.inner().to_array().iter().all(|&x| x == 0));
+  }
+
+  #[test]
+  fn copy_clone_and_eq()
+  {
+    let m1 = MatrixI8x3x3::from_array([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    let m2 = m1; // Copy
+    assert_eq!(m1, m2);
+    assert_eq!(m1, MatrixI8x3x3::from_array([1, 2, 3, 4, 5, 6, 7, 8, 9]));
+    // Different contents are not equal
+    let m3 = MatrixI8x3x3::from_array([9, 8, 7, 6, 5, 4, 3, 2, 1]);
+    assert_ne!(m1, m3);
+  }
+
+  #[test]
+  fn wrapper_roundtrip()
+  {
+    let m = MatrixI64x4x4::from_array([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+    ]);
+    let inner: Simd<i64, 16> = m.inner().clone();
+    // via IntoInner
+    let m2 = MatrixI64x4x4::from_inner(inner);
+    assert_eq!(m, m2);
+  }
+}

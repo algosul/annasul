@@ -105,3 +105,40 @@ where
     *self = SimdMulAdd::mul_add(*self, a, b);
   }
 }
+
+#[cfg(test)]
+mod tests
+{
+  use std::simd::Simd;
+
+  use super::{SimdMulAdd, SimdMulAddAssign, SimdReduceSum};
+
+  #[test]
+  fn reduce_sum_integral()
+  {
+    let s = Simd::<i32, 4>::from_array([1, 2, 3, 4]);
+    assert_eq!(SimdReduceSum::reduce_sum(s), 10);
+    let s = Simd::<u8, 4>::from_array([1, 1, 1, 1]);
+    assert_eq!(SimdReduceSum::reduce_sum(s), 4);
+  }
+
+  #[test]
+  fn reduce_sum_float()
+  {
+    let s = Simd::<f32, 4>::from_array([1.0, 2.0, 3.0, 4.0]);
+    assert_eq!(SimdReduceSum::reduce_sum(s), 10.0);
+  }
+
+  #[test]
+  fn mul_add_and_assign()
+  {
+    let s = Simd::<f32, 4>::from_array([1.0, 2.0, 3.0, 4.0]);
+    let a = Simd::<f32, 4>::from_array([2.0, 2.0, 2.0, 2.0]);
+    let b = Simd::<f32, 4>::from_array([1.0, 1.0, 1.0, 1.0]);
+    let r = SimdMulAdd::mul_add(s, a, b); // s*a + b
+    assert_eq!(r.to_array(), [3.0, 5.0, 7.0, 9.0]);
+    let mut m = s;
+    m.mul_add_assign(a, b);
+    assert_eq!(m.to_array(), [3.0, 5.0, 7.0, 9.0]);
+  }
+}

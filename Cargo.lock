@@ -42,6 +42,18 @@ name = "algosul-derive"
 version = "0.0.17"
 dependencies = [
  "algosul-core",
+ "algosul-derive-util",
+ "proc-macro-warning",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "algosul-derive-util"
+version = "0.0.17"
+dependencies = [
+ "algosul-core",
  "proc-macro-warning",
  "proc-macro2",
  "quote",

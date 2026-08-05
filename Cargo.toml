@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = [".", "ai", "derive", "core", "math"]
+members = [".", "ai", "derive", "core", "math", "derive-util"]
 [workspace.package]
 version = "0.0.17"
 authors = ["algosul <hxb.air@gmail.com>"]
@@ -15,6 +15,7 @@ readme = "README.md"
 algosul-core = { version = "0.0.17", path = "core", default-features = false }
 algosul-math = { version = "0.0.17", path = "math", default-features = false }
 algosul-derive = { version = "0.0.17", path = "derive", default-features = false }
+algosul-derive-util = { version = "0.0.17", path = "derive-util", default-features = false }
 image = "0.25.6"
 strfmt = "0.2.5"
 env_logger = "0.11.8"

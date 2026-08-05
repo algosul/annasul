@@ -136,3 +136,62 @@ impl_shape_for_triangle_float! {
   f32
   f64
 }
+
+#[cfg(test)]
+mod tests
+{
+  use super::traits::IsInside;
+  use super::*;
+  use crate::vector::Vector;
+  use algosul_core::wrapper::Inner;
+
+  fn triangle_i32() -> Triangle<i32, 2>
+  {
+    Triangle::from_array([
+      Vector::<i32, 2>::from_array([0, 0]),
+      Vector::<i32, 2>::from_array([4, 0]),
+      Vector::<i32, 2>::from_array([0, 4]),
+    ])
+  }
+
+  fn triangle_f32() -> Triangle<f32, 2>
+  {
+    Triangle::from_array([
+      Vector::<f32, 2>::from_array([0.0, 0.0]),
+      Vector::<f32, 2>::from_array([4.0, 0.0]),
+      Vector::<f32, 2>::from_array([0.0, 4.0]),
+    ])
+  }
+
+  #[test]
+  fn from_array_stores_points()
+  {
+    let t = triangle_i32();
+    let pts = t.inner(); // &[Vector<i32,2>; 3]
+    assert_eq!(pts[0].inner().to_array(), [0, 0]);
+    assert_eq!(pts[1].inner().to_array(), [4, 0]);
+    assert_eq!(pts[2].inner().to_array(), [0, 4]);
+  }
+
+  #[test]
+  fn point_inside_int_triangle()
+  {
+    let t = triangle_i32();
+    // Interior points
+    assert!(t.is_inside(Vector::<i32, 2>::from_array([1, 1])));
+    assert!(t.is_inside(Vector::<i32, 2>::from_array([3, 1])));
+    assert!(t.is_inside(Vector::<i32, 2>::from_array([1, 3])));
+    // Clearly outside
+    assert!(!t.is_inside(Vector::<i32, 2>::from_array([100, 100])));
+  }
+
+  #[test]
+  fn point_inside_float_triangle()
+  {
+    let t = triangle_f32();
+    assert!(t.is_inside(Vector::<f32, 2>::from_array([1.0, 1.0])));
+    assert!(t.is_inside(Vector::<f32, 2>::from_array([0.5, 0.5])));
+    assert!(!t.is_inside(Vector::<f32, 2>::from_array([-1.0, -1.0])));
+    assert!(!t.is_inside(Vector::<f32, 2>::from_array([5.0, 5.0])));
+  }
+}
