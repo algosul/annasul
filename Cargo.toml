@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = [".", "ai", "derive", "core", "math", "derive-util"]
+members = [".", "ai", "derive", "core", "math", "derive-util", "task"]
 [workspace.package]
 version = "0.0.17"
 authors = ["algosul <hxb.air@gmail.com>"]
@@ -41,6 +41,8 @@ unic-langid-impl = "0.9.6"
 uuid = { version = "1.23.1", default-features = false }
 num = "0.4.3"
 num-traits = "0.2.19"
+wincode = "0.6.1"
+rkyv = "0.8.18"
 
 [package]
 name = "algosul"

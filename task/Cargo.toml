@@ -1,0 +1,32 @@
+[package]
+name = "algosul-task"
+version.workspace = true
+authors.workspace = true
+repository.workspace = true
+keywords.workspace = true
+license-file.workspace = true
+edition.workspace = true
+description.workspace = true
+readme.workspace = true
+
+[features]
+default = ["serialization-rykv"]
+
+serialization-full = ["serialization-rykv", "serialization-serde-wincode"]
+serialization-serde = ["dep:serde"]
+serialization-serde-wincode = ["serialization-serde", "dep:wincode"]
+serialization-rykv = ["dep:rkyv"]
+
+unstable = []
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+
+[dependencies]
+algosul-core = { workspace = true, features = ["util-async"] }
+thiserror = { workspace = true, features = ["std"] }
+serde = { workspace = true, features = [], public = true, optional = true }
+wincode = { workspace = true, features = [], optional = true }
+rkyv = { workspace = true, features = [], public = true, optional = true }
+
+
