@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = [".", "ai", "derive", "core", "math", "derive-util", "task"]
+members = [".", "ai", "derive", "core", "math", "derive-util", "task", "develop/ui/rust-serde-type-editor"]
 [workspace.package]
 version = "0.0.17"
 authors = ["algosul <hxb.air@gmail.com>"]
@@ -43,6 +43,8 @@ num = "0.4.3"
 num-traits = "0.2.19"
 wincode = "0.6.1"
 rkyv = "0.8.18"
+gtk4 = "0.11.4"
+glib = "0.22.8"
 
 [package]
 name = "algosul"
@@ -79,7 +81,7 @@ serde = ["algosul-core/serde", "algosul-math/serde"]
 core-util = ["algosul-core/util"]
 core-util-async = ["algosul-core/util-async"]
 core-util-std = ["algosul-core/util-std"]
-
+core-wrapper = ["algosul-core/wrapper"]
 
 [package.metadata.docs.rs]
 rustdoc-args = ["-cfg", "docsrs"]

@@ -1,0 +1,19 @@
+[package]
+name = "rust-serde-type-editor"
+version.workspace = true
+authors.workspace = true
+repository.workspace = true
+keywords.workspace = true
+license-file.workspace = true
+edition.workspace = true
+description.workspace = true
+readme.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+serde = { workspace = true, public = true, features = ["derive"] }
+# serde's traits/associated types live in `serde_core`; expose it publicly so the
+# `public-dependency` lint (`.cargo/config.toml`) accepts them in our public API.
+serde_core = { version = "1", public = true }
+gtk4 = { workspace = true, public = true }
+glib = { workspace = true, public = true }

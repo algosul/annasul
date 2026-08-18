@@ -30,6 +30,5 @@ required-features = ["wrapper"]
 algosul-core = { workspace = true, public = true }
 algosul-derive-util = { workspace = true, public = true }
 proc-macro2.workspace = true
-proc-macro-warning.workspace = true
 quote.workspace = true
 syn = { workspace = true, features = ["full"] }
