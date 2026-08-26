@@ -1,4 +1,3 @@
-use algosul_derive_util::Logger;
 use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::{ToTokens, quote};
 use syn::{
@@ -13,10 +12,12 @@ use syn::{
   spanned::Spanned,
 };
 
-#[derive(Debug, Default, Clone)]
+use crate::Message;
+
+#[derive(Default, Clone)]
 pub struct WrapperParser
 {
-  logger: Logger,
+  messages: Vec<Message>,
 }
 
 impl WrapperParser
@@ -30,10 +31,10 @@ impl WrapperParser
   {
     let impl_token_stream = self.for_derive_input(derive_input);
 
-    let logger = &self.logger;
+    let messages = self.messages.iter().map(Message::to_token_stream);
 
     quote! {
-      #logger
+      #(#messages)*
       #impl_token_stream
     }
   }
@@ -99,12 +100,9 @@ impl WrapperParser
   {
     if let Visibility::Public(_) = field.vis
     {
-      let ident_name =
-        field.ident.as_ref().map(Ident::to_string).unwrap_or(i.to_string());
-      self.logger.error_spanned(
-        &field.vis,
-        format!("#[wrapper(inner)] cannot use for public field `{ident_name}`"),
-      );
+      self.messages.push(Message::Error(
+        crate::Error::WrapperInnerUseForPublicField { field: field.clone() },
+      ));
     }
   }
 
@@ -113,10 +111,9 @@ impl WrapperParser
     i: usize, field: &Field,
   )
   {
-    for attr in &field.attrs
-    {
+    field.attrs.iter().for_each(|attr| {
       self.for_struct_field_attr(attr, option_field, i, field);
-    }
+    });
   }
 
   fn for_struct_field_attr(
@@ -125,41 +122,40 @@ impl WrapperParser
     field: &Field,
   )
   {
-    if attr.meta.path().is_ident("wrapper")
+    if !attr.meta.path().is_ident("wrapper")
     {
-      let arg: Ident = if let Ok(arg) = attr.parse_args()
+      return;
+    }
+    let arg: Ident = if let Ok(arg) = attr.parse_args()
+    {
+      arg
+    }
+    else
+    {
+      self.messages.push(Message::Error(crate::Error::InvalidAttribute {
+        attr: attr.clone(),
+      }));
+      return;
+    };
+    if arg == "inner"
+    {
+      self.attr_inner_check(&arg, i, field);
+      if option_field.is_some()
       {
-        arg
+        self.messages.push(Message::Error(
+          crate::Error::DuplicateWrapperInnerAttribute { attr: attr.clone() },
+        ));
       }
       else
       {
-        self.logger.error_spanned(
-          attr,
-          format!("Invalid attribute: `{}`", attr.to_token_stream()),
-        );
-        return;
-      };
-      if arg == "inner"
-      {
-        self.attr_inner_check(&arg, i, field);
-        if option_field.is_some()
-        {
-          self
-            .logger
-            .error_spanned(attr, "Duplicate `#[wrapper(inner)]` attribute");
-        }
-        else
-        {
-          *option_field = Some((i, field.ident.clone(), field.ty.clone()));
-        }
+        *option_field = Some((i, field.ident.clone(), field.ty.clone()));
       }
-      else
-      {
-        self.logger.error_spanned(
-          &arg,
-          format!("Invalid attribute `#[wrapper({arg})]`"),
-        );
-      }
+    }
+    else
+    {
+      self.messages.push(Message::Error(crate::Error::InvalidAttribute {
+        attr: attr.clone(),
+      }));
     }
   }
 
@@ -172,8 +168,9 @@ impl WrapperParser
     {
       self.for_struct_field(&mut option_field, i, field);
     }
+
     option_field.or_else(|| {
-      self.logger.error(span, "no set `#[wrapper(inner)]`");
+      self.messages.push(Message::Error(crate::Error::NoWrapperInner { span }));
       None
     })
   }

@@ -20,15 +20,13 @@ unstable = [
     "proc-macro2/nightly",
 ]
 
-wrapper = ["algosul-core/wrapper"]
-
 [[test]]
 name = "wrapper"
-required-features = ["wrapper"]
+path = "tests/wrapper.rs"
 
 [dependencies]
-algosul-core = { workspace = true, public = true }
-algosul-derive-util = { workspace = true, public = true }
+algosul-core = { workspace = true, public = true, features = ["util-derive"] }
 proc-macro2.workspace = true
+proc-macro-warning = { workspace = true, public = true }
 quote.workspace = true
 syn = { workspace = true, features = ["full"] }

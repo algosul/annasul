@@ -1,13 +1,11 @@
 use std::fmt::Display;
 
-use algosul_core::{
-  util::{Take, Taker, TryTake, TryTaker},
-  wrapper::prelude::*,
-};
 use proc_macro2::{Span, TokenStream};
 use proc_macro_warning::FormattedWarning;
 use quote::{ToTokens, quote};
 use syn::{Error, spanned::Spanned};
+
+use crate::util::{Take, Taker, TryTake, TryTaker};
 
 #[derive(Debug, Default, Clone)]
 pub struct Logger
@@ -36,13 +34,6 @@ pub struct LoggerTryTaker<'a>
 {
   logger:      &'a mut Logger,
   call_in_err: Box<dyn FnMut(&dyn std::error::Error)>,
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct ResultWithLogger<T: ?Sized>
-{
-  logger: Logger,
-  inner:  T,
 }
 
 impl Logger
@@ -119,84 +110,6 @@ impl TryTaker for LoggerTryTaker<'_>
       (self.call_in_err)(todo!());
       Err(err)
     })
-  }
-}
-
-impl<T> ResultWithLogger<T>
-{
-  pub fn new(logger: Logger, inner: T) -> Self
-  {
-    Self { logger, inner }
-  }
-
-  pub fn into_logger(self) -> Logger
-  {
-    self.logger
-  }
-
-  pub fn logger(&self) -> &Logger
-  {
-    &self.logger
-  }
-
-  pub fn logger_mut(&mut self) -> &mut Logger
-  {
-    &mut self.logger
-  }
-
-  pub fn into_result(self) -> Result<T, Logger>
-  {
-    if self.logger.is_empty() { Ok(self.inner) } else { Err(self.logger) }
-  }
-}
-
-impl<T> AsRef<T> for ResultWithLogger<T>
-{
-  fn as_ref(&self) -> &T
-  {
-    &self.inner
-  }
-}
-
-impl<T> AsMut<T> for ResultWithLogger<T>
-{
-  fn as_mut(&mut self) -> &mut T
-  {
-    &mut self.inner
-  }
-}
-
-impl<T> Wrapper for ResultWithLogger<T>
-{
-  type Inner = T;
-}
-
-impl<T> IntoInner for ResultWithLogger<T>
-{
-  fn into_inner(self) -> T
-  {
-    self.inner
-  }
-}
-impl<T> Inner for ResultWithLogger<T>
-{
-  fn inner(&self) -> &T
-  {
-    &self.inner
-  }
-}
-impl<T> InnerMut for ResultWithLogger<T>
-{
-  fn inner_mut(&mut self) -> &mut T
-  {
-    &mut self.inner
-  }
-}
-impl<T> FromInner for ResultWithLogger<T>
-{
-  fn from_inner(inner: Self::Inner) -> Self
-  {
-    Self { logger: Logger::default(), inner }
   }
 }
 

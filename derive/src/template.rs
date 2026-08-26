@@ -1,14 +1,9 @@
-use algosul_derive_util::Logger;
 use proc_macro2::TokenStream;
-use quote::quote;
 
 mod ast;
 
 #[derive(Default, Debug, Clone)]
-pub(crate) struct TemplateParser
-{
-  logger: Logger,
-}
+pub(crate) struct TemplateParser {}
 
 impl TemplateParser
 {
@@ -24,12 +19,8 @@ impl TemplateParser
       Ok(template) => todo!(),
       Err(err) =>
       {
-        self.logger.syn_error(err);
+        todo!()
       }
-    }
-    let logger = &self.logger;
-    quote! {
-      #logger
     }
   }
 }

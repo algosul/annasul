@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = [".", "ai", "derive", "core", "math", "derive-util", "task", "develop/ui/rust-serde-type-editor"]
+members = [".", "ai", "derive", "core", "math", "task", "develop/ui/rust-serde-type-editor"]
 [workspace.package]
 version = "0.0.17"
 authors = ["algosul <hxb.air@gmail.com>"]
@@ -15,7 +15,6 @@ readme = "README.md"
 algosul-core = { version = "0.0.17", path = "core", default-features = false }
 algosul-math = { version = "0.0.17", path = "math", default-features = false }
 algosul-derive = { version = "0.0.17", path = "derive", default-features = false }
-algosul-derive-util = { version = "0.0.17", path = "derive-util", default-features = false }
 image = "0.25.6"
 strfmt = "0.2.5"
 env_logger = "0.11.8"
@@ -78,10 +77,7 @@ unstable-full = ["algosul-core/unstable-full", "algosul-math/unstable-full"]
 
 serde = ["algosul-core/serde", "algosul-math/serde"]
 
-core-util = ["algosul-core/util"]
-core-util-async = ["algosul-core/util-async"]
-core-util-std = ["algosul-core/util-std"]
-core-wrapper = ["algosul-core/wrapper"]
+derive = ["dep:algosul-derive"]
 
 [package.metadata.docs.rs]
 rustdoc-args = ["-cfg", "docsrs"]
@@ -89,7 +85,7 @@ rustdoc-args = ["-cfg", "docsrs"]
 [dependencies]
 algosul-core = { workspace = true, public = true }
 algosul-math = { workspace = true, public = true }
-algosul-derive = { workspace = true, public = true }
+algosul-derive = { workspace = true, public = true, optional = true }
 
 [build-dependencies]
 env_logger = { workspace = true, features = [] }

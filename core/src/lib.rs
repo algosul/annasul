@@ -12,8 +12,6 @@ pub mod module;
 #[cfg(feature = "message")]
 pub mod message;
 
-#[cfg(feature = "util")]
 pub mod util;
 
-#[cfg(feature = "wrapper")]
 pub mod wrapper;

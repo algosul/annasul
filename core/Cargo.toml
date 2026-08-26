@@ -14,7 +14,7 @@ default = []
 
 std = ["serde/std", "thiserror/std", "uuid/std"]
 unstable = []
-unstable-full = ["unstable"]
+unstable-full = ["unstable", "__feature-const_trait_impl"]
 
 __feature-const_trait_impl = ["unstable"]
 
@@ -23,11 +23,7 @@ serde = ["dep:serde"]
 i18n = ["dep:unic-langid", "dep:unic-langid-impl"]
 i18n-fluent = ["i18n", "dep:fluent"]
 
-util = []
-util-async = ["util"]
-util-std = ["util", "std", "wrapper"]
-
-wrapper = []
+util-derive = ["std", "dep:proc-macro2", "dep:proc-macro-warning", "dep:quote", "dep:syn"]
 
 module = ["std"]
 
@@ -43,3 +39,7 @@ fluent = { workspace = true, public = true, optional = true }
 unic-langid = { workspace = true, public = true, optional = true }
 unic-langid-impl = { workspace = true, public = true, optional = true }
 uuid = { workspace = true, optional = true }
+proc-macro2 = { workspace = true, public = true, optional = true }
+proc-macro-warning = { workspace = true, public = true, optional = true }
+quote = { workspace = true, public = true, optional = true }
+syn = { workspace = true, public = true, optional = true }

@@ -23,7 +23,7 @@ unstable = []
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 
 [dependencies]
-algosul-core = { workspace = true, features = ["util-async"] }
+algosul-core = { workspace = true, features = [] }
 thiserror = { workspace = true, features = ["std"] }
 serde = { workspace = true, features = [], public = true, optional = true }
 wincode = { workspace = true, features = [], optional = true }

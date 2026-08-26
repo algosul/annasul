@@ -1,7 +1,9 @@
-#[cfg(feature = "util-async")]
 pub mod r#async;
-#[cfg(feature = "util-std")]
+#[cfg(feature = "std")]
 pub mod std;
+
+#[cfg(feature = "util-derive")]
+pub mod derive;
 
 #[cfg(not(feature = "std"))]
 use core::{option::Option, result::Result};
