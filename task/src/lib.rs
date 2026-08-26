@@ -1,8 +1,3 @@
-use std::{
-  io::{Read, Write},
-  marker::PhantomData,
-};
-
 use thiserror::Error;
 
 use crate::connector::Connector;
@@ -40,18 +35,32 @@ pub enum Error
 
 pub type Result<T> = core::result::Result<T, Error>;
 
+/// Two tasks linked one after the other: `b` runs on the output of `a`.
+///
+/// The input and output types are derived from the associated types of `a`
+/// and `b`, so no extra type parameters are needed.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct Dependent<
-  A: Connectable<Input, Output = Data> + Send + 'static,
-  B: Connectable<Data, Output = Output> + Send + 'static,
-  Data: Send + 'static,
-  Input: Send + 'static,
-  Output: Send + 'static,
-> {
-  a:      A,
-  b:      B,
-  _data:  PhantomData<Data>,
-  _input: PhantomData<Input>,
+pub struct Dependent<A, B>
+{
+  a: A,
+  b: B,
+}
+
+/// A chain of two sequential tasks that behaves as a single task.
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct Link<B, C>
+{
+  b: B,
+  c: C,
+}
+
+/// Unwraps a task whose output is a [`Result`], falling back to `default` on
+/// `Err`.
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct UnwrapOr<A, O>
+{
+  a:       A,
+  default: O,
 }
 
 pub trait Runnable<Input>
@@ -68,14 +77,22 @@ pub trait Connectable<Input>: Runnable<Input>
   where Self: Sized;
 }
 
-pub trait TaskMap<
-  B: Connectable<Data, Output = Output> + Send + 'static,
-  Data: Send + 'static,
+pub trait TaskMap<B, Input>: Sized + Connectable<Input> + Send + 'static
+where
+  B: Send + 'static,
   Input: Send + 'static,
-  Output: Send + 'static,
->: Sized + Connectable<Input, Output = Data> + Send + 'static
 {
-  fn map(self, b: B) -> Dependent<Self, B, Data, Input, Output>;
+  type Mapped;
+  fn map(self, b: B) -> Self::Mapped;
+}
+
+pub trait TaskUnwrapOr<Input, O>: Sized + Connectable<Input> + Send + 'static
+where
+  Input: Send + 'static,
+  O: Send + 'static,
+{
+  type Mapped;
+  fn unwrap_or(self, default: O) -> Self::Mapped;
 }
 
 impl<T: FnOnce(Input) -> Output, Input, Output> Runnable<Input> for T
@@ -98,29 +115,96 @@ impl<T: FnOnce(Input) -> Output, Input, Output> Connectable<Input> for T
   }
 }
 
-impl<
-  A: Connectable<Input, Output = Data> + Send + 'static,
-  B: Connectable<Data, Output = Output> + Send + 'static,
-  Data: Send + 'static,
+impl<B, C, Input> Runnable<Input> for Link<B, C>
+where
+  B: Connectable<Input> + Send + 'static,
   Input: Send + 'static,
-  Output: Send + 'static,
-> Runnable<Input> for Dependent<A, B, Data, Input, Output>
+  B::Output: Send + 'static,
+  C: Connectable<B::Output> + Send + 'static,
+  C::Output: Send + 'static,
 {
-  type Output = Result<Output>;
+  type Output = C::Output;
+
+  fn run_once(self, input: Input) -> Self::Output
+  {
+    let mut connector = connector::SyncConnector::new();
+    self.connect(input, &mut connector)
+  }
+}
+
+impl<B, C, Input> Connectable<Input> for Link<B, C>
+where
+  B: Connectable<Input> + Send + 'static,
+  Input: Send + 'static,
+  B::Output: Send + 'static,
+  C: Connectable<B::Output> + Send + 'static,
+  C::Output: Send + 'static,
+{
+  fn connect(
+    self, input: Input, connector: &mut impl Connector,
+  ) -> Self::Output
+  {
+    self.c.connect(self.b.connect(input, connector), connector)
+  }
+}
+
+impl<A, O, Input> Runnable<Input> for UnwrapOr<A, O>
+where
+  A: Connectable<Input, Output = Result<O>> + Send + 'static,
+  Input: Send + 'static,
+  O: Send + 'static,
+{
+  type Output = O;
+
+  fn run_once(self, input: Input) -> Self::Output
+  {
+    match self.a.run_once(input) {
+      Ok(value) => value,
+      Err(_) => self.default,
+    }
+  }
+}
+
+impl<A, O, Input> Connectable<Input> for UnwrapOr<A, O>
+where
+  A: Connectable<Input, Output = Result<O>> + Send + 'static,
+  Input: Send + 'static,
+  O: Send + 'static,
+{
+  fn connect(
+    self, input: Input, connector: &mut impl Connector,
+  ) -> Self::Output
+  {
+    match self.a.connect(input, connector) {
+      Ok(value) => value,
+      Err(_) => self.default,
+    }
+  }
+}
+
+impl<A, B, Input> Runnable<Input> for Dependent<A, B>
+where
+  A: Connectable<Input> + Send + 'static,
+  Input: Send + 'static,
+  A::Output: Send + 'static,
+  B: Connectable<A::Output> + Send + 'static,
+  B::Output: Send + 'static,
+{
+  type Output = Result<B::Output>;
 
   fn run_once(self, input: Input) -> Self::Output
   {
     connector::SyncConnector::new().dependent(input, self)
   }
 }
-impl<A, B, Data, Input, Output> Connectable<Input>
-  for Dependent<A, B, Data, Input, Output>
+
+impl<A, B, Input> Connectable<Input> for Dependent<A, B>
 where
-  A: Connectable<Input, Output = Data> + Send + 'static,
-  B: Connectable<Data, Output = Output> + Send + 'static,
-  Data: Send + 'static,
+  A: Connectable<Input> + Send + 'static,
   Input: Send + 'static,
-  Output: Send + 'static,
+  A::Output: Send + 'static,
+  B: Connectable<A::Output> + Send + 'static,
+  B::Output: Send + 'static,
 {
   fn connect(self, input: Input, connector: &mut impl Connector)
   -> Self::Output
@@ -129,21 +213,69 @@ where
   }
 }
 
-impl<A, B, Data, Input, Output> TaskMap<B, Data, Input, Output> for A
+impl<F, B, Input, Output> TaskMap<B, Input> for F
 where
-  A: Connectable<Input, Output = Data> + Send + 'static,
-  B: Connectable<Data, Output = Output> + Send + 'static,
-  Data: Send + 'static,
+  F: FnOnce(Input) -> Output + Send + 'static,
   Input: Send + 'static,
   Output: Send + 'static,
+  B: Connectable<Output> + Send + 'static,
+  B::Output: Send + 'static,
 {
-  fn map(self, right: B) -> Dependent<Self, B, Data, Input, Output>
+  type Mapped = Dependent<F, B>;
+
+  fn map(self, right: B) -> Self::Mapped
+  {
+    Dependent { a: self, b: right }
+  }
+}
+
+impl<A, B, C, Input> TaskMap<C, Input> for Dependent<A, B>
+where
+  A: Connectable<Input> + Send + 'static,
+  Input: Send + 'static,
+  A::Output: Send + 'static,
+  B: Connectable<A::Output> + Send + 'static,
+  B::Output: Send + 'static,
+  C: Connectable<B::Output> + Send + 'static,
+  C::Output: Send + 'static,
+{
+  type Mapped = Dependent<A, Link<B, C>>;
+
+  fn map(self, right: C) -> Self::Mapped
   {
     Dependent {
-      a:      self,
-      b:      right,
-      _data:  PhantomData,
-      _input: PhantomData,
+      a: self.a,
+      b: Link { b: self.b, c: right },
     }
+  }
+}
+
+impl<A, O, C, Input> TaskMap<C, Input> for UnwrapOr<A, O>
+where
+  A: Connectable<Input, Output = Result<O>> + Send + 'static,
+  Input: Send + 'static,
+  O: Send + 'static,
+  C: Connectable<O> + Send + 'static,
+  C::Output: Send + 'static,
+{
+  type Mapped = Dependent<UnwrapOr<A, O>, C>;
+
+  fn map(self, right: C) -> Self::Mapped
+  {
+    Dependent { a: self, b: right }
+  }
+}
+
+impl<A, O, Input> TaskUnwrapOr<Input, O> for A
+where
+  A: Connectable<Input, Output = Result<O>> + Send + 'static,
+  Input: Send + 'static,
+  O: Send + 'static,
+{
+  type Mapped = UnwrapOr<A, O>;
+
+  fn unwrap_or(self, default: O) -> Self::Mapped
+  {
+    UnwrapOr { a: self, default }
   }
 }

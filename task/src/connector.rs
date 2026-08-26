@@ -2,15 +2,15 @@ use crate::{Connectable, Dependent, Result};
 
 pub trait Connector
 {
-  fn dependent<
-    A: Connectable<Input, Output = Data> + Send + 'static,
-    B: Connectable<Data, Output = Output> + Send + 'static,
-    Data: Send + 'static,
+  fn dependent<A, B, Input>(
+    &mut self, input: Input, dependent: Dependent<A, B>,
+  ) -> Result<B::Output>
+  where
+    A: Connectable<Input> + Send + 'static,
     Input: Send + 'static,
-    Output: Send + 'static,
-  >(
-    &mut self, input: Input, dependent: Dependent<A, B, Data, Input, Output>,
-  ) -> Result<Output>;
+    A::Output: Send + 'static,
+    B: Connectable<A::Output> + Send + 'static,
+    B::Output: Send + 'static;
 }
 
 #[derive(Debug, Clone)]
@@ -37,21 +37,21 @@ impl MutiThreadConnector
 
 impl Connector for MutiThreadConnector
 {
-  fn dependent<
-    A: Connectable<Input, Output = Data> + Send + 'static,
-    B: Connectable<Data, Output = Output> + Send + 'static,
-    Data: Send + 'static,
+  fn dependent<A, B, Input>(
+    &mut self, input: Input, dependent: Dependent<A, B>,
+  ) -> Result<B::Output>
+  where
+    A: Connectable<Input> + Send + 'static,
     Input: Send + 'static,
-    Output: Send + 'static,
-  >(
-    &mut self, input: Input, dependent: Dependent<A, B, Data, Input, Output>,
-  ) -> Result<Output>
+    A::Output: Send + 'static,
+    B: Connectable<A::Output> + Send + 'static,
+    B::Output: Send + 'static,
   {
     let (sender, receiver) = std::sync::mpsc::channel();
     let mut b_self = self.clone();
     let handle = std::thread::spawn(move || {
-      let data: Data = receiver.recv().map_err(|err| Box::new(err) as _)?;
-      Ok::<Output, Box<dyn std::error::Error + Send>>(
+      let data: A::Output = receiver.recv().map_err(|err| Box::new(err) as _)?;
+      Ok::<B::Output, Box<dyn std::error::Error + Send>>(
         dependent.b.connect(data, &mut b_self),
       )
     });
@@ -84,15 +84,15 @@ impl SyncConnector
 
 impl Connector for SyncConnector
 {
-  fn dependent<
-    A: Connectable<Input, Output = Data> + Send,
-    B: Connectable<Data, Output = Output> + Send,
-    Data: Send,
-    Input: Send,
-    Output: Send,
-  >(
-    &mut self, input: Input, dependent: Dependent<A, B, Data, Input, Output>,
-  ) -> Result<Output>
+  fn dependent<A, B, Input>(
+    &mut self, input: Input, dependent: Dependent<A, B>,
+  ) -> Result<B::Output>
+  where
+    A: Connectable<Input> + Send + 'static,
+    Input: Send + 'static,
+    A::Output: Send + 'static,
+    B: Connectable<A::Output> + Send + 'static,
+    B::Output: Send + 'static,
   {
     Ok(dependent.b.connect(dependent.a.connect(input, self), self))
   }
